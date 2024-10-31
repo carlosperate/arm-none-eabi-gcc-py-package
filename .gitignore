@@ -1,7 +1,10 @@
 #################
 # Project files #
 #################
-# Nothing yet
+# Downloaded GC releases
+*.zip
+*.tar.bz2
+*.tar.xz
 
 ####################
 # Editor/IDE files #
