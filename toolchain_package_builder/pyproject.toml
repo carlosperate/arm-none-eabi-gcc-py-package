@@ -6,14 +6,11 @@ build-backend = "setuptools.build_meta"
 readme = {file = ["README.md"]}
 
 [project]
-name = "arm_none_eabi_gcc_toolchain"
+name = "toolchain_package_builder"
 version = "0.1.0"
-description = "Arm GNU Toolchain (arm-none-eabi-gcc)"
+description = "Downloads a GNU Arm Embedded Toolchain and packages it as a Python package"
 authors = [
     { name = "Carlos Pereira Atencio", email = "carlosperate@embeddedlog.com" }
 ]
 readme = {file = "README.md", content-type = "text/markdown"}
 license = {"file" = "LICENSE"}
-
-[project.scripts]
-arm-none-eabi-gcc-t = "arm_none_eabi_gcc_toolchain.launch:arm_none_eabi_gcc"

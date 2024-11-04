@@ -4,15 +4,18 @@ import sys
 import tarfile
 import zipfile
 import urllib.request
+from pathlib import Path
 
 from rich.progress import Progress, BarColumn, DownloadColumn, TransferSpeedColumn, TimeRemainingColumn
 
-from package_builder import gcc_releases, file_templates
+import gcc_releases, file_templates
+
 
 PACKAGE_NAME = "arm_none_eabi_gcc_toolchain"
+PACKAGE_LOCATION = Path(__file__).resolve().parents[1] / PACKAGE_NAME
 
 
-def download_toolchain(file_url, save_path="."):
+def download_toolchain(file_url: str, save_path: Path = Path(".")) -> Path:
     """
     Download the toolchain from the given URL into the given path.
     Displays a progress bar in the terminal.
@@ -21,17 +24,18 @@ def download_toolchain(file_url, save_path="."):
     :param save_path: Path to save the downloaded file.
     :return: Full path to the downloaded file.
     """
-    print(f"Downloading toolchain from: {file_url}")
-    if not os.path.isdir(save_path):
+    # TODO: save_path default value might be computed at definition time
+    print(f"Downloading toolchain from:\n\t{file_url}")
+    if not save_path.is_dir():
         raise FileNotFoundError(f"Toolchain save path not found: {save_path}")
     url_file_name = os.path.basename(file_url)
-    file_path = os.path.join(save_path, url_file_name)
-    print(f"Into: {os.path.relpath(file_path, os.getcwd())}")
-    if os.path.isfile(file_path):
+    file_path = save_path / url_file_name
+    print(f"Into: {Path(file_path).absolute().relative_to(Path.cwd())}")
+    if file_path.is_file():
         # FIXME:
         #raise FileExistsError(f"Toolchain file already exists: {file_path}")
         print("SKIPPING")
-        return os.path.abspath(file_path)
+        return file_path
 
     response = urllib.request.urlopen(file_url)
     total_length = int(response.getheader('Content-Length'))
@@ -56,7 +60,7 @@ def download_toolchain(file_url, save_path="."):
     return file_path
 
 
-def uncompress_toolchain(file_path, destination="."):
+def uncompress_toolchain(file_path: Path, destination: Path = Path(".")) -> Path:
     """
     Uncompress the given compressed file into the provided directory.
 
@@ -80,35 +84,35 @@ def uncompress_toolchain(file_path, destination="."):
     uncompressed_folder_start = os.path.abspath(os.path.join(
         destination, "-".join(os.path.basename(file_path).split("-")[:2])
     ))
-    for item in os.listdir(destination):
-        item = os.path.abspath(os.path.join(destination, item))
-        if item.startswith(uncompressed_folder_start):
+    for item in destination.iterdir():
+        if str(item).startswith(uncompressed_folder_start):
             # FIXME:
             # raise FileExistsError(f"Uncompressed folder already exists: {os.path.join(destination, item)}")
             print("SKIPPING")
             return item
 
-    if file_path.endswith(".zip"):
+    if str(file_path).endswith(".zip"):
         with zipfile.ZipFile(file_path, "r") as zip_ref:
             zip_ref.extractall(path=destination)
-    elif file_path.endswith(".tar.bz2"):
+    elif str(file_path).endswith(".tar.bz2"):
         with tarfile.open(file_path, "r:bz2") as tar_ref:
             tar_ref.extractall(path=destination)
-    elif file_path.endswith(".tar.xz"):
+    elif str(file_path).endswith(".tar.xz"):
         with tarfile.open(file_path, "r:xz") as tar_ref:
             tar_ref.extractall(path=destination)
     else:
         raise ValueError(f"Unsupported file extension: {file_path}")
 
     # Get the full name of the uncompressed folder
-    for item in os.listdir(destination):
-        item = os.path.abspath(os.path.join(destination, item))
-        if item.startswith(uncompressed_folder_start):
+    for item in destination.iterdir():
+        if str(item).startswith(uncompress_toolchain):
+            print("!!")
+            print(item)
             return item
     raise FileNotFoundError(f"Uncompressed folder not found with this start path: {uncompressed_folder_start}")
 
 
-def create_package_files(package_path, gcc_folder):
+def create_package_files(package_path: Path, gcc_path: Path) -> None:
     """
     Create the package files with the provided GCC toolchain folder.
 
@@ -116,15 +120,16 @@ def create_package_files(package_path, gcc_folder):
     :param gcc_folder: Path to the GCC toolchain folder.
     """
     print(f"Creating package files in: {package_path}")
-    if not os.path.isdir(package_path):
+    if not package_path.is_dir():
         raise FileNotFoundError(f"Package directory not found: {package_path}")
-    if not os.path.isdir(gcc_folder):
-        raise FileNotFoundError(f"GCC toolchain folder not found: {gcc_folder}")
-    if not os.path.commonpath([package_path, gcc_folder]) == package_path:
-        raise ValueError(f"GCC toolchain folder not inside the package path: {gcc_folder}")
-    
+    if not gcc_path.is_dir():
+        raise FileNotFoundError(f"GCC toolchain folder not found: {gcc_path}")
+    # Check gcc_path is inside package_path
+    if not os.path.commonpath([package_path, gcc_path]) == str(package_path):
+        raise ValueError(f"GCC toolchain folder not inside the package path: {gcc_path}")
+
     # Ensure the gcc_folder is a relative path to the package_path
-    gcc_folder = os.path.relpath(gcc_folder, package_path)
+    gcc_folder = gcc_path.relative_to(package_path)
 
     # Iterate through all the bin files to figure out which executables are available
     bin_files = []
@@ -156,26 +161,22 @@ def create_package_files(package_path, gcc_folder):
 
 
 def main():
-    # Find gcc toolchain package path from this file path
-    src_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    package_path = os.path.join(src_path, PACKAGE_NAME)
-    if not os.path.isdir(package_path):
-        raise FileNotFoundError(f"Package directory not found: {package_path}")
-    print(f"Package directory: {os.path.relpath(package_path, os.getcwd())}")
-    
+    print(f"Package to build directory: {os.path.relpath(PACKAGE_LOCATION, os.getcwd())}")
+    if not os.path.isdir(PACKAGE_LOCATION):
+        raise FileNotFoundError(f"Package directory not found: {PACKAGE_LOCATION}")
+
     # Get the GCC release and uncompress it in the package directory
     gcc_url = gcc_releases.gcc_releases["13.3.Rel1"]["mac_x86_64"]["url"]
     gcc_zip_file = download_toolchain(gcc_url)
     try:
-        gcc_folder = uncompress_toolchain(gcc_zip_file, package_path)
+        gcc_folder = uncompress_toolchain(gcc_zip_file, PACKAGE_LOCATION)
     finally:
         # FIXME:
         #os.remove(gcc_zip_file)
         pass
 
     # Create the package files with the GCC toolchain folder inside
-    create_package_files(package_path, gcc_folder)
-
+    create_package_files(PACKAGE_LOCATION, gcc_folder)
 
 
 if __name__ == "__main__":
