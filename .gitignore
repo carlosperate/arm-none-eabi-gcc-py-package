@@ -1,10 +1,14 @@
 #################
 # Project files #
 #################
-# Downloaded GC releases
+# Downloaded GCC releases
 *.zip
 *.tar.bz2
 *.tar.xz
+
+# Uncompressed GCC releases
+arm_none_eabi_gcc_toolchain/src/arm_none_eabi_gcc_toolchain/arm-gnu-toolchain*
+arm_none_eabi_gcc_toolchain/src/arm_none_eabi_gcc_toolchain/gcc-arm-*
 
 ####################
 # Editor/IDE files #
