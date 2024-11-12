@@ -147,39 +147,36 @@ def create_package_files(package_path: Path, gcc_path: Path) -> None:
     for root, _, files in os.walk(gcc_path / "bin"):
         for file in files:
             bin_file = os.path.basename(file)
-            bin_short = bin_file.replace("arm-none-eabi-", "")
-            bin_short = re.sub("[^0-9a-zA-Z_]", "_", bin_short)
-            bin_files.append((bin_file, bin_short))
-            print(f"- {bin_file} ({bin_short})")
+            func_name = bin_file.replace("arm-none-eabi-", "run_")
+            func_name = re.sub("[^0-9a-zA-Z_]", "_", func_name)
+            bin_files.append((bin_file, func_name))
+            print(f"- {bin_file} ({func_name})")
     if not bin_files:
         raise FileNotFoundError("No executables found in the GCC toolchain bin folder")
 
     # Create a python file per executable to launch it
-    for bin_file, bin_short in bin_files:
-        with open(package_path / f"{bin_short}.py", "w") as file:
+    for bin_file, func_name in bin_files:
+        with open(package_path / f"{func_name}.py", "w") as file:
             file.write(
                 file_templates.executable_launcher.format(
-                    bin=bin_file, bin_short=bin_short, gcc_folder=gcc_folder
+                    bin=bin_file, func_name=func_name, gcc_folder=gcc_folder
                 )
             )
 
-    # Update the package pyproject file
+    # Create the package pyproject.toml file
     pyproject_scripts = []
-    for bin_file, bin_short in bin_files:
+    for bin_file, func_name in bin_files:
         pyproject_scripts.append(
-            f'"{bin_file}" = "{PACKAGE_NAME}.{bin_short}:launch_{bin_short}"'
+            f'"{bin_file}" = "{PACKAGE_NAME}.{func_name}:{func_name}"'
         )
-    pyproject_path = package_path.parents[1] / "pyproject.toml"
-    with open(pyproject_path, "r") as file:
-        pyproject_content = file.read()
-    with open(pyproject_path, "w") as file:
-        file.write(pyproject_content.replace(
-            "[project.scripts]",
-            "[project.scripts]\n" +
-            "\n".join(pyproject_scripts)
-            #"[tool.setuptools.packages.find]\n" +
-            #f"where = ["{gcc_folder}"]"
+    with open(package_path.parents[1] / "pyproject.toml", "w") as file:
+        file.write(file_templates.pyproject_toml.format(
+            bin_scripts="\n".join(pyproject_scripts)
         ))
+
+    # Create the MANIFEST.in file
+    with open(package_path.parents[1] / "MANIFEST.in", "w") as file:
+        file.write(file_templates.manifest_in.format(gcc_folder=gcc_folder))
 
 
 def main():
