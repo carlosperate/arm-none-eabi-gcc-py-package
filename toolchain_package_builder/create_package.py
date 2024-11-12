@@ -14,11 +14,13 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
-import gcc_releases, file_templates
+from toolchain_package_builder import gcc_releases, file_templates
 
 
 PACKAGE_NAME = "arm_none_eabi_gcc_toolchain"
-PACKAGE_LOCATION = Path(__file__).resolve().parents[1] / PACKAGE_NAME / "src" / PACKAGE_NAME
+PACKAGE_LOCATION = (
+    Path(__file__).resolve().parents[1] / PACKAGE_NAME / "src" / PACKAGE_NAME
+)
 
 
 def download_toolchain(file_url: str, save_path: Path = Path.cwd()) -> Path:
@@ -35,12 +37,9 @@ def download_toolchain(file_url: str, save_path: Path = Path.cwd()) -> Path:
         raise FileNotFoundError(f"Toolchain save path not found: {save_path}")
     url_file_name = os.path.basename(file_url)
     file_path = save_path / url_file_name
-    print(f"Into: {Path(file_path).absolute().relative_to(Path.cwd())}")
+    print(f"Into: ./{Path(file_path).absolute().relative_to(Path.cwd())}")
     if file_path.is_file():
-        # FIXME:
-        # raise FileExistsError(f"Toolchain file already exists: {file_path}")
-        print("SKIPPING")
-        return file_path
+        raise FileExistsError(f"Toolchain file already exists: {file_path}")
 
     response = urllib.request.urlopen(file_url)
     total_length = int(response.getheader("Content-Length"))
@@ -78,7 +77,7 @@ def uncompress_toolchain(file_path: Path, destination: Path = Path.cwd()) -> Pat
     :param destination: Path to uncompress the file into.
     :return: Full path to the uncompressed directory.
     """
-    print(f"Uncompressing toolchain file: {file_path}")
+    print(f"\nUncompressing toolchain file: ./{file_path.relative_to(Path.cwd())}")
     print(f"Into: {destination.resolve().relative_to(Path.cwd())}/")
     if not destination.is_dir():
         raise FileNotFoundError(f"Destination directory not found: {destination}")
@@ -86,14 +85,13 @@ def uncompress_toolchain(file_path: Path, destination: Path = Path.cwd()) -> Pat
         raise FileNotFoundError(f"File to uncompress not found: {file_path}")
     # The uncompressed folder will start with the same two words
     # (separated by '-') as the compressed file
-    uncompressed_folder_start = str((destination / file_path.stem.split("-")[0]).resolve())
+    uncompressed_folder_start = str(
+        (destination / file_path.stem.split("-")[0]).resolve()
+    )
     for item in destination.iterdir():
         item = item.resolve()
         if str(item).startswith(uncompressed_folder_start):
-            # FIXME:
-            # raise FileExistsError(f"Uncompressed folder already exists: {os.path.join(destination, item)}")
-            print("SKIPPING (already present)")
-            return item
+            raise FileExistsError(f"Uncompressed folder already exists: {os.path.join(destination, item)}")
 
     if str(file_path).endswith(".zip"):
         with zipfile.ZipFile(file_path, "r") as zip_ref:
@@ -127,7 +125,7 @@ def create_package_files(package_path: Path, gcc_path: Path) -> None:
     """
     package_path = package_path.resolve()
     gcc_path = gcc_path.resolve()
-    print(f"Creating package files in: {package_path.relative_to(Path.cwd())}")
+    print(f"\nCreating package files in: {package_path.relative_to(Path.cwd())}")
     if not package_path.is_dir():
         raise FileNotFoundError(f"Package directory not found: {package_path}")
     if not gcc_path.is_dir():
@@ -170,33 +168,30 @@ def create_package_files(package_path: Path, gcc_path: Path) -> None:
             f'"{bin_file}" = "{PACKAGE_NAME}.{func_name}:{func_name}"'
         )
     with open(package_path.parents[1] / "pyproject.toml", "w") as file:
-        file.write(file_templates.pyproject_toml.format(
-            bin_scripts="\n".join(pyproject_scripts)
-        ))
+        file.write(
+            file_templates.pyproject_toml.format(
+                bin_scripts="\n".join(pyproject_scripts)
+            )
+        )
 
     # Create the MANIFEST.in file
     with open(package_path.parents[1] / "MANIFEST.in", "w") as file:
         file.write(file_templates.manifest_in.format(gcc_folder=gcc_folder))
 
 
-def main():
-    print(f"Package to build directory: {PACKAGE_LOCATION.relative_to(Path.cwd())}")
+def build_package():
+    print(f"Package directory: {PACKAGE_LOCATION.relative_to(Path.cwd())}")
     if not PACKAGE_LOCATION.is_dir():
         raise FileNotFoundError(f"Package directory not found: {PACKAGE_LOCATION}")
 
     # Get the GCC release and uncompress it in the package directory
     gcc_url = gcc_releases.gcc_releases["13.3.Rel1"]["mac_x86_64"]["url"]
     gcc_zip_file = download_toolchain(gcc_url)
-    try:
-        gcc_path = uncompress_toolchain(gcc_zip_file, PACKAGE_LOCATION)
-    finally:
-        # FIXME:
-        # os.remove(gcc_zip_file)
-        pass
+    gcc_path = uncompress_toolchain(gcc_zip_file, PACKAGE_LOCATION)
 
     # Create the package files with the GCC toolchain folder inside
     create_package_files(PACKAGE_LOCATION, gcc_path)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(build_package())
