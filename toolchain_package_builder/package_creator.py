@@ -3,8 +3,10 @@ import re
 import sys
 import tarfile
 import zipfile
+import platform
 import urllib.request
 from pathlib import Path
+from typing import Optional
 
 from rich.progress import (
     Progress,
@@ -14,7 +16,8 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
-from toolchain_package_builder import gcc_releases, file_templates
+from toolchain_package_builder import file_templates
+from toolchain_package_builder.gcc_releases import gcc_releases
 
 
 PACKAGE_NAME = "arm_none_eabi_gcc_toolchain"
@@ -91,7 +94,9 @@ def uncompress_toolchain(file_path: Path, destination: Path = Path.cwd()) -> Pat
     for item in destination.iterdir():
         item = item.resolve()
         if str(item).startswith(uncompressed_folder_start):
-            raise FileExistsError(f"Uncompressed folder already exists: {os.path.join(destination, item)}")
+            raise FileExistsError(
+                f"Uncompressed folder already exists: {os.path.join(destination, item)}"
+            )
 
     if str(file_path).endswith(".zip"):
         with zipfile.ZipFile(file_path, "r") as zip_ref:
@@ -179,14 +184,71 @@ def create_package_files(package_path: Path, gcc_path: Path) -> None:
         file.write(file_templates.manifest_in.format(gcc_folder=gcc_folder))
 
 
-def build_package():
+def get_gcc_release(
+    release_name: Optional[str], os_type: Optional[str], cpu_arch: Optional[str]
+):
+    # Set default values
+    # Python dictionaries are now ordered, so the latest release is the first one
+    if release_name is None:
+        release_name = list(gcc_releases.keys())[0]
+    if os_type is None:
+        os_type = platform.system()
+    os_type = os_type.lower()
+    if cpu_arch is None:
+        cpu_arch = platform.machine()
+    cpu_arch = cpu_arch.lower()
+
+    # Determine CPU architecture
+    if cpu_arch in ["x86_64", "amd64", "i386", "i686"]:
+        cpu_arch = "x86_64"
+    elif cpu_arch in ["arm64", "aarch64", "armv8a", "armv8b", "armv8l"]:
+        cpu_arch = "arm"
+    else:
+        raise ValueError(f"Unrecognised CPU architecture: {cpu_arch}")
+
+    if os_type in ["darwin", "macos", "macosx", "osx", "mac"]:
+        if cpu_arch == "x86_64":
+            release_type = "mac_x86_64"
+        elif cpu_arch == "arm":
+            release_type = "mac_arm64"
+            # Not all releases have a macOS ARM version
+            if release_type not in gcc_releases[release_name]:
+                raise ValueError(
+                    f"Release {release_name} does not have a macOS arm64 version"
+                )
+    elif os_type in ["windows", "win", "win32"]:
+        if cpu_arch == "x86_64":
+            release_type = "win32"
+        elif cpu_arch == "arm":
+            raise ValueError("Windows ARM architecture not supported")
+    elif os_type in ["linux", "linux2"]:
+        if cpu_arch == "x86_64":
+            release_type = "linux_x86_64"
+        elif cpu_arch == "arm":
+            release_type = "linux_aarch64"
+    else:
+        raise ValueError(f"Unrecognised OS: {os_type}")
+
+    return gcc_releases[release_name][release_type], release_name, release_type
+
+
+def build_package(
+    gcc_release_name: Optional[str] = None,
+    os_type: Optional[str] = None,
+    cpu_arch: Optional[str] = None,
+) -> None:
     print(f"Package directory: {PACKAGE_LOCATION.relative_to(Path.cwd())}")
     if not PACKAGE_LOCATION.is_dir():
         raise FileNotFoundError(f"Package directory not found: {PACKAGE_LOCATION}")
 
+    # Get the current platform between linux, macos or windows
+    gcc_release, gcc_release_name, gcc_release_arch = get_gcc_release(
+        gcc_release_name, os_type, cpu_arch
+    )
+    print(f"GCC release: {gcc_release_name} ({gcc_release_arch})\n")
+
     # Get the GCC release and uncompress it in the package directory
-    gcc_url = gcc_releases.gcc_releases["13.3.Rel1"]["mac_x86_64"]["url"]
-    gcc_zip_file = download_toolchain(gcc_url)
+    gcc_zip_file = download_toolchain(gcc_release["url"])
     gcc_path = uncompress_toolchain(gcc_zip_file, PACKAGE_LOCATION)
 
     # Create the package files with the GCC toolchain folder inside

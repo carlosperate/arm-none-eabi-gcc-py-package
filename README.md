@@ -15,7 +15,7 @@ build the package.
 
 This application downloads an Arm GCC release, extracts it into the
 `arm_none_eabi_gcc_toolchain` folder, creates additional required Python files,
-and builds the package.
+and builds the `arm_none_eabi_gcc_toolchain` package.
 
 Install the builder dependencies (it's recommended to use a virtual environment):
 

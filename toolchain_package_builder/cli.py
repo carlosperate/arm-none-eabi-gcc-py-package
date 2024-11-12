@@ -1,11 +1,12 @@
 import shutil
 import itertools
 from pathlib import Path
-
+from typing import Optional
 
 import typer
+from typing_extensions import Annotated
 
-from toolchain_package_builder.create_package import PACKAGE_NAME, build_package
+from toolchain_package_builder.package_creator import PACKAGE_NAME, build_package
 
 app = typer.Typer()
 
@@ -71,10 +72,14 @@ def clean():
 
 
 @app.command()
-def build():
+def build(
+    release: Annotated[Optional[str], typer.Option(help="GCC release name")] = None,
+    os: Annotated[Optional[str], typer.Option(help="Operating System name")] = None,
+    arch: Annotated[Optional[str], typer.Option(help="CPU architecture")] = None,
+):
     clean()
     print("\nBuilding package")
-    build_package()
+    build_package(release, os, arch)
 
 
 def main():
