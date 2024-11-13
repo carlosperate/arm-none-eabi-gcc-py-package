@@ -4,6 +4,7 @@ import sys
 import tarfile
 import zipfile
 import platform
+import subprocess
 import urllib.request
 from pathlib import Path
 from typing import Optional
@@ -21,9 +22,8 @@ from toolchain_package_builder.gcc_releases import gcc_releases
 
 
 PACKAGE_NAME = "arm_none_eabi_gcc_toolchain"
-PACKAGE_LOCATION = (
-    Path(__file__).resolve().parents[1] / PACKAGE_NAME / "src" / PACKAGE_NAME
-)
+PACKAGE_PATH = Path(__file__).resolve().parents[1] / PACKAGE_NAME
+PACKAGE_SRC_PATH = PACKAGE_PATH / "src" / PACKAGE_NAME
 
 
 def download_toolchain(file_url: str, save_path: Path = Path.cwd()) -> Path:
@@ -153,7 +153,7 @@ def create_package_files(package_path: Path, gcc_path: Path) -> None:
             func_name = bin_file.replace("arm-none-eabi-", "run_")
             func_name = re.sub("[^0-9a-zA-Z_]", "_", func_name)
             bin_files.append((bin_file, func_name))
-            print(f"- {bin_file} ({func_name})")
+            print(f"- {bin_file} ({func_name}.py)")
     if not bin_files:
         raise FileNotFoundError("No executables found in the GCC toolchain bin folder")
 
@@ -232,28 +232,41 @@ def get_gcc_release(
     return gcc_releases[release_name][release_type], release_name, release_type
 
 
+def build_python_wheel(package_path: Path, wheel_dir: Path) -> None:
+    """
+    Create a Python wheel from the package directory.
+
+    :param package_path: Path to the package directory.
+    """
+    print(f"\nCreating Python wheel from: {package_path.relative_to(Path.cwd())}")
+    if not package_path.is_dir():
+        raise FileNotFoundError(f"Package directory not found: {package_path}")
+
+    subprocess.run([
+        sys.executable, "-m", "pip", "wheel", "--wheel-dir", wheel_dir, ".",
+    ], check=True, cwd=package_path)
+
+
 def build_package(
     gcc_release_name: Optional[str] = None,
     os_type: Optional[str] = None,
     cpu_arch: Optional[str] = None,
 ) -> None:
-    print(f"Package directory: {PACKAGE_LOCATION.relative_to(Path.cwd())}")
-    if not PACKAGE_LOCATION.is_dir():
-        raise FileNotFoundError(f"Package directory not found: {PACKAGE_LOCATION}")
+    print(f"Package directory: {PACKAGE_PATH.relative_to(Path.cwd())}")
+    if not PACKAGE_PATH.is_dir() or not PACKAGE_SRC_PATH.is_dir():
+        raise FileNotFoundError(f"Package directory not found: {PACKAGE_SRC_PATH}")
 
-    # Get the current platform between linux, macos or windows
     gcc_release, gcc_release_name, gcc_release_arch = get_gcc_release(
         gcc_release_name, os_type, cpu_arch
     )
     print(f"GCC release: {gcc_release_name} ({gcc_release_arch})\n")
 
-    # Get the GCC release and uncompress it in the package directory
     gcc_zip_file = download_toolchain(gcc_release["url"])
-    gcc_path = uncompress_toolchain(gcc_zip_file, PACKAGE_LOCATION)
-
-    # Create the package files with the GCC toolchain folder inside
-    create_package_files(PACKAGE_LOCATION, gcc_path)
+    gcc_path = uncompress_toolchain(gcc_zip_file, PACKAGE_SRC_PATH)
+    create_package_files(PACKAGE_SRC_PATH, gcc_path)
+    build_python_wheel(PACKAGE_PATH, PACKAGE_PATH / "dist")
 
 
 if __name__ == "__main__":
-    sys.exit(build_package())
+    build_package()
+    sys.exit(0)
