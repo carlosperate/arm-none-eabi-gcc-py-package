@@ -10,7 +10,7 @@ to the Python environment path.
 
 ## Building the package
 
-A python application is provided in the `toolchain_package_builder` folder to
+A python application is provided in the `package_builder` folder to
 build the package.
 
 This application downloads an Arm GCC release, extracts it into the
@@ -26,5 +26,5 @@ pip install -r requirements.txt
 Run the builder:
 
 ```bash
-python -m toolchain_package_builder build
+python -m package_builder build
 ```

@@ -7,12 +7,13 @@ import typer
 from typing_extensions import Annotated
 from rich import print
 
-from toolchain_package_builder import package_creator
-from toolchain_package_builder.package_creator import PACKAGE_NAME, PACKAGE_PATH, PACKAGE_SRC_PATH
+from package_builder import package_creator
+from package_builder.package_creator import PACKAGE_NAME, PACKAGE_PATH, PACKAGE_SRC_PATH
 
 
 app = typer.Typer()
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
 
 @app.command()
 def clean():
@@ -25,6 +26,7 @@ def clean():
         PROJECT_ROOT / PACKAGE_NAME / "pyproject.toml",
     ]
     folders = [
+        PROJECT_ROOT / ".mypy_cache",
         PROJECT_ROOT / PACKAGE_NAME / "src" / f"{PACKAGE_NAME}.egg-info",
         PROJECT_ROOT / PACKAGE_NAME / "build",
     ]
@@ -79,7 +81,7 @@ def build(
     os: Annotated[Optional[str], typer.Option(help="Operating System name")] = None,
     arch: Annotated[Optional[str], typer.Option(help="CPU architecture")] = None,
 ):
-    #clean()
+    clean()
 
     print("\n[green]Start building Python package[/green]")
 
@@ -94,12 +96,12 @@ def build(
 
     # Get the GCC release and uncompress it in the package directory
     print("\n[green]Downloading and uncompressing GCC toolchain[/green]")
-    #gcc_zip_file = package_creator.download_toolchain(gcc_release["url"])
-    #gcc_path = package_creator.uncompress_toolchain(gcc_zip_file, PACKAGE_SRC_PATH)
+    gcc_zip_file = package_creator.download_toolchain(gcc_release["url"])
+    gcc_path = package_creator.uncompress_toolchain(gcc_zip_file, PACKAGE_SRC_PATH)
 
     # Create the package files with the GCC toolchain folder inside
     print("\n[green]Creating Python package files[/green]")
-    #package_creator.create_package_files(PACKAGE_SRC_PATH, gcc_path)
+    package_creator.create_package_files(PACKAGE_SRC_PATH, gcc_path)
 
     print("\n[green]Building Python wheel[/green]")
     package_creator.build_python_wheel(PACKAGE_PATH, PROJECT_ROOT / "dist")

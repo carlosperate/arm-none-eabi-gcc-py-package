@@ -17,8 +17,8 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
-from toolchain_package_builder import file_templates
-from toolchain_package_builder.gcc_releases import gcc_releases
+from package_builder import file_templates
+from package_builder.gcc_releases import gcc_releases
 
 
 PACKAGE_NAME = "arm_none_eabi_gcc_toolchain"
@@ -242,9 +242,19 @@ def build_python_wheel(package_path: Path, wheel_dir: Path) -> None:
     if not package_path.is_dir():
         raise FileNotFoundError(f"Package directory not found: {package_path}")
 
-    subprocess.run([
-        sys.executable, "-m", "pip", "wheel", "--wheel-dir", wheel_dir, ".",
-    ], check=True, cwd=package_path)
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "wheel",
+            "--wheel-dir",
+            wheel_dir,
+            ".",
+        ],
+        check=True,
+        cwd=package_path,
+    )
 
 
 def build_package(
