@@ -7,6 +7,14 @@ into a Python package that can be easily installed via pip.
 The resulting Python package includes the full toolchain and adds its binaries
 to the Python environment path.
 
+This is still a work-in-progress and doesn't work yet.
+
+## TODO
+
+- [ ] Update wheels to have platform labels
+- [ ] Create a static simple repository ([PEP 503](https://peps.python.org/pep-0503/)) to host the wheels via GitHub (releases+pages)
+- [ ] Use or fork [wheel-stub](https://github.com/wheel-next/wheel-stub/) to be able to publish source packages to PyPI
+- [ ] Keep an eye on [PEP 759 – External Wheel Hosting](https://peps.python.org/pep-0759/)
 
 ## Building the package
 
