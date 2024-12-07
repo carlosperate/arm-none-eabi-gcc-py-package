@@ -232,7 +232,7 @@ def get_gcc_release(
     return gcc_releases[release_name][release_type], release_name, release_type
 
 
-def build_python_wheel(package_path: Path, wheel_dir: Path) -> None:
+def build_python_wheel(package_path: Path, wheel_dir: Path, wheel_plat: str) -> None:
     """
     Create a Python wheel from the package directory.
 
@@ -256,6 +256,26 @@ def build_python_wheel(package_path: Path, wheel_dir: Path) -> None:
         cwd=package_path,
     )
 
+    # pip will create platform agnostic wheels, so we need to make them platform specific
+    wheel_path = wheel_dir / f"{PACKAGE_NAME}-0.1.0-py3-none-any.whl"
+    if not wheel_path.is_file():
+        raise FileNotFoundError(f"Wheel file not found: {wheel_path}")
+
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "wheel",
+            "tags",
+            "--platform-tag",
+            wheel_plat,
+            wheel_path.name,
+        ],
+        check=True,
+        cwd=wheel_dir,
+    )
+    wheel_path.unlink()
+
 
 def build_package(
     gcc_release_name: Optional[str] = None,
@@ -274,7 +294,7 @@ def build_package(
     gcc_zip_file = download_toolchain(gcc_release["url"])
     gcc_path = uncompress_toolchain(gcc_zip_file, PACKAGE_SRC_PATH)
     create_package_files(PACKAGE_SRC_PATH, gcc_path)
-    build_python_wheel(PACKAGE_PATH, PACKAGE_PATH / "dist")
+    build_python_wheel(PACKAGE_PATH, PACKAGE_PATH / "dist", gcc_release["wheel_plat"])
 
 
 if __name__ == "__main__":

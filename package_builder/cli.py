@@ -104,7 +104,9 @@ def build(
     package_creator.create_package_files(PACKAGE_SRC_PATH, gcc_path)
 
     print("\n[green]Building Python wheel[/green]")
-    package_creator.build_python_wheel(PACKAGE_PATH, PROJECT_ROOT / "dist")
+    package_creator.build_python_wheel(
+        PACKAGE_PATH, PROJECT_ROOT / "dist", gcc_release["wheel_plat"]
+    )
 
     print("\n[green]Package created![/green]")
 
