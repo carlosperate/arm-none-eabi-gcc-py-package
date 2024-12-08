@@ -7,7 +7,9 @@ import platform
 import subprocess
 import urllib.request
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
+from collections import namedtuple
+
 
 import toml
 from rich.progress import (
@@ -26,6 +28,9 @@ from package_builder.gcc_releases import gcc_releases, gcc_short_versions
 PACKAGE_NAME = "arm_none_eabi_gcc_toolchain"
 PACKAGE_PATH = Path(__file__).resolve().parents[1] / PACKAGE_NAME
 PACKAGE_SRC_PATH = PACKAGE_PATH / "src" / PACKAGE_NAME
+
+# NameTuple with the GCC info
+GccInfo = namedtuple('GccInfo', ['files', 'release_name', 'os_arch'])
 
 
 def download_toolchain(file_url: str, save_path: Path = Path.cwd()) -> Path:
@@ -122,14 +127,14 @@ def uncompress_toolchain(file_path: Path, destination: Path = Path.cwd()) -> Pat
     )
 
 
-def generate_package_version(gcc_release: str) -> str:
+def generate_package_version(gcc_release_name: str) -> str:
     """
     Generate a package version based on the GCC release and this package version.
 
     :param gcc_release: GCC release name.
     :return: Combined package version string.
     """
-    return gcc_short_versions[gcc_release] + "." + package_builder_version
+    return gcc_short_versions[gcc_release_name] + "." + package_builder_version
 
 
 def create_package_files(
@@ -198,19 +203,35 @@ def create_package_files(
         file.write(file_templates.manifest_in.format(gcc_folder=gcc_folder))
 
 
-def get_gcc_release(
+def get_gcc_releases(
     release_name: Optional[str], os_type: Optional[str], cpu_arch: Optional[str]
-):
+) -> List[GccInfo]:
     # Set default values
-    # Python dictionaries are now ordered, so the latest release is the first one
     if release_name is None:
+        # Python dictionaries are now ordered, so the latest release is the first one
         release_name = list(gcc_releases.keys())[0]
+    if release_name not in gcc_releases:
+        raise ValueError(f"Unrecognised GCC release name: {release_name}")
     if os_type is None:
         os_type = platform.system()
     os_type = os_type.lower()
     if cpu_arch is None:
         cpu_arch = platform.machine()
     cpu_arch = cpu_arch.lower()
+
+    # We have a special case for os_type and cpu_arch being set to "all"
+    # but error if only one of them is set to "all"
+    if (os_type == "all" and cpu_arch != "all") or (os_type != "all" and cpu_arch == "all"):
+        raise ValueError("Both OS type and CPU architecture must be 'all', not just one")
+    if os_type == "all" and cpu_arch == "all":
+        gcc_release_all = []
+        for release_type in gcc_releases[release_name].keys():
+            gcc_release_all.append(GccInfo(
+                files=gcc_releases[release_name][release_type],
+                release_name=release_name,
+                os_arch=release_type
+            ))
+        return gcc_release_all
 
     # Determine CPU architecture
     if cpu_arch in ["x86_64", "amd64", "i386", "i686"]:
@@ -243,7 +264,11 @@ def get_gcc_release(
     else:
         raise ValueError(f"Unrecognised OS: {os_type}")
 
-    return gcc_releases[release_name][release_type], release_name, release_type
+    return [GccInfo(
+        files=gcc_releases[release_name][release_type],
+        release_name=release_name,
+        os_arch=release_type
+    )]
 
 
 def build_python_wheel(package_path: Path, wheel_dir: Path, wheel_plat: str) -> None:
@@ -296,28 +321,23 @@ def build_python_wheel(package_path: Path, wheel_dir: Path, wheel_plat: str) -> 
     wheel_path.unlink()
 
 
-def build_package(
-    gcc_release_name: Optional[str] = None,
-    os_type: Optional[str] = None,
-    cpu_arch: Optional[str] = None,
-) -> None:
+def build_package_local_machine() -> None:
     print(f"Package directory: {PACKAGE_PATH.relative_to(Path.cwd())}")
     if not PACKAGE_PATH.is_dir() or not PACKAGE_SRC_PATH.is_dir():
         raise FileNotFoundError(f"Package directory not found: {PACKAGE_SRC_PATH}")
 
-    gcc_release, gcc_release_name, gcc_release_arch = get_gcc_release(
-        gcc_release_name, os_type, cpu_arch
-    )
-    print(f"GCC release: {gcc_release_name} ({gcc_release_arch})\n")
+    gcc_releases_list = get_gcc_releases()
+    for gcc_release in gcc_releases_list:
+        print(f"GCC release: {gcc_release.release_name} ({gcc_release.arch})\n")
 
-    gcc_zip_file = download_toolchain(gcc_release["url"])
-    gcc_path = uncompress_toolchain(gcc_zip_file, PACKAGE_SRC_PATH)
-    create_package_files(
-        PACKAGE_SRC_PATH, gcc_path, generate_package_version(gcc_release_name)
-    )
-    build_python_wheel(PACKAGE_PATH, PACKAGE_PATH / "dist", gcc_release["wheel_plat"])
+        gcc_zip_file = download_toolchain(gcc_release.files["url"])
+        gcc_path = uncompress_toolchain(gcc_zip_file, PACKAGE_SRC_PATH)
+        create_package_files(
+            PACKAGE_SRC_PATH, gcc_path, generate_package_version(gcc_release.release_name)
+        )
+        build_python_wheel(PACKAGE_PATH, PACKAGE_PATH / "dist", gcc_release.files["wheel_plat"])
 
 
 if __name__ == "__main__":
-    build_package()
+    build_package_local_machine()
     sys.exit(0)

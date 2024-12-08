@@ -81,35 +81,40 @@ def build(
     os: Annotated[Optional[str], typer.Option(help="Operating System name")] = None,
     arch: Annotated[Optional[str], typer.Option(help="CPU architecture")] = None,
 ):
-    clean()
+    """
+    Builds the Python package with the selected GCC release.
 
-    print("\n[green]Start building Python package[/green]")
+    If os and arch are set to "all", it will built packages for all the release platforms.
+    """
+    print("\n[green]Start building Python package/s[/green]")
 
-    print(f"Package directory: {PACKAGE_PATH.relative_to(Path.cwd())}")
+    print(f"Package directory: {PACKAGE_PATH.relative_to(Path.cwd())}\n")
     if not PACKAGE_PATH.is_dir() or not PACKAGE_SRC_PATH.is_dir():
         raise FileNotFoundError(f"Package directory not found: {PACKAGE_SRC_PATH}")
 
-    gcc_release, gcc_release_name, gcc_release_arch = package_creator.get_gcc_release(
-        release, os, arch
-    )
-    print(f"GCC release: {gcc_release_name} ({gcc_release_arch})")
+    selected_gcc_releases = package_creator.get_gcc_releases(release, os, arch)
+    for gcc_release in selected_gcc_releases:
+        # Perform a clean build for each release
+        clean()
 
-    # Get the GCC release and uncompress it in the package directory
-    print("\n[green]Downloading and uncompressing GCC toolchain[/green]")
-    gcc_zip_file = package_creator.download_toolchain(gcc_release["url"])
-    gcc_path = package_creator.uncompress_toolchain(gcc_zip_file, PACKAGE_SRC_PATH)
+        print(f"\n[green]Building GCC release: {gcc_release.release_name} ({gcc_release.os_arch})[/green]")
 
-    # Create the package files with the GCC toolchain folder inside
-    print("\n[green]Creating Python package files[/green]")
-    gcc_short_version = package_creator.generate_package_version(gcc_release_name)
-    package_creator.create_package_files(PACKAGE_SRC_PATH, gcc_path, gcc_short_version)
+        # Get the GCC release and uncompress it in the package directory
+        print("\n[green]Downloading and uncompressing GCC toolchain[/green]")
+        gcc_zip_file = package_creator.download_toolchain(gcc_release.files["url"])
+        gcc_path = package_creator.uncompress_toolchain(gcc_zip_file, PACKAGE_SRC_PATH)
 
-    print("\n[green]Building Python wheel[/green]")
-    package_creator.build_python_wheel(
-        PACKAGE_PATH, PROJECT_ROOT / "dist", gcc_release["wheel_plat"]
-    )
+        # Create the package files with the GCC toolchain folder inside
+        print("\n[green]Creating Python package files[/green]")
+        package_version = package_creator.generate_package_version(gcc_release.release_name)
+        package_creator.create_package_files(PACKAGE_SRC_PATH, gcc_path, package_version)
 
-    print("\n[green]Package created![/green]")
+        print("\n[green]Building Python wheel[/green]")
+        package_creator.build_python_wheel(
+            PACKAGE_PATH, PROJECT_ROOT / "dist", gcc_release.files["wheel_plat"]
+        )
+
+        print(f"\n[green]Package {gcc_release.release_name} ({gcc_release.os_arch}) created![/green]")
 
 
 def main():
