@@ -33,7 +33,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "arm_none_eabi_gcc_toolchain"
-version = "0.1.0"
+version = "{version}"
 description = "Arm GNU Toolchain (arm-none-eabi-gcc)"
 authors = [
     {{ name = "Carlos Pereira Atencio", email = "carlosperate@embeddedlog.com" }}

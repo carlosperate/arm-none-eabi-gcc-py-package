@@ -9,6 +9,7 @@ import urllib.request
 from pathlib import Path
 from typing import Optional
 
+import toml
 from rich.progress import (
     Progress,
     BarColumn,
@@ -18,7 +19,8 @@ from rich.progress import (
 )
 
 from package_builder import file_templates
-from package_builder.gcc_releases import gcc_releases
+from package_builder import __version__ as package_builder_version
+from package_builder.gcc_releases import gcc_releases, gcc_short_versions
 
 
 PACKAGE_NAME = "arm_none_eabi_gcc_toolchain"
@@ -120,7 +122,19 @@ def uncompress_toolchain(file_path: Path, destination: Path = Path.cwd()) -> Pat
     )
 
 
-def create_package_files(package_path: Path, gcc_path: Path) -> None:
+def generate_package_version(gcc_release: str) -> str:
+    """
+    Generate a package version based on the GCC release and this package version.
+
+    :param gcc_release: GCC release name.
+    :return: Combined package version string.
+    """
+    return gcc_short_versions[gcc_release] + "." + package_builder_version
+
+
+def create_package_files(
+    package_path: Path, gcc_path: Path, package_version: str
+) -> None:
     """
     Create the package files with the provided GCC toolchain folder and
     script launchers for each executable.
@@ -175,7 +189,7 @@ def create_package_files(package_path: Path, gcc_path: Path) -> None:
     with open(package_path.parents[1] / "pyproject.toml", "w") as file:
         file.write(
             file_templates.pyproject_toml.format(
-                bin_scripts="\n".join(pyproject_scripts)
+                version=package_version, bin_scripts="\n".join(pyproject_scripts)
             )
         )
 
@@ -242,6 +256,9 @@ def build_python_wheel(package_path: Path, wheel_dir: Path, wheel_plat: str) -> 
     if not package_path.is_dir():
         raise FileNotFoundError(f"Package directory not found: {package_path}")
 
+    # To later find the wheel we check for any new files added to the wheel directory
+    initial_files = set(wheel_dir.iterdir())
+
     subprocess.run(
         [
             sys.executable,
@@ -256,10 +273,12 @@ def build_python_wheel(package_path: Path, wheel_dir: Path, wheel_plat: str) -> 
         cwd=package_path,
     )
 
-    # pip will create platform agnostic wheels, so we need to make them platform specific
-    wheel_path = wheel_dir / f"{PACKAGE_NAME}-0.1.0-py3-none-any.whl"
+    # Generate the expected wheel file name from the pyproject.toml
+    with open(package_path / "pyproject.toml", "r") as file:
+        pyproject_toml = toml.load(file)
+    wheel_path = wheel_dir / f"{pyproject_toml['project']['name']}-{pyproject_toml['project']['version']}-py3-none-any.whl"
     if not wheel_path.is_file():
-        raise FileNotFoundError(f"Wheel file not found: {wheel_path}")
+        raise FileNotFoundError(f"Wheel file not found in: {wheel_dir}")
 
     subprocess.run(
         [
@@ -293,7 +312,9 @@ def build_package(
 
     gcc_zip_file = download_toolchain(gcc_release["url"])
     gcc_path = uncompress_toolchain(gcc_zip_file, PACKAGE_SRC_PATH)
-    create_package_files(PACKAGE_SRC_PATH, gcc_path)
+    create_package_files(
+        PACKAGE_SRC_PATH, gcc_path, generate_package_version(gcc_release_name)
+    )
     build_python_wheel(PACKAGE_PATH, PACKAGE_PATH / "dist", gcc_release["wheel_plat"])
 
 

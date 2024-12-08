@@ -184,28 +184,29 @@ gcc_releases = {
             "wheel_plat": "manylinux_2_27_aarch64",
         },
     },
-    "10.3-2021.07": {
-        "win32": {
-            "url": "https://developer.arm.com/-/media/Files/downloads/gnu-rm/10.3-2021.07/gcc-arm-none-eabi-10.3-2021.07-win32.zip",
-            "md5": "fca12668002f8c52cfa174400fd2d03e",
-            "wheel_plat": "win32",
-        },
-        "mac_x86_64": {
-            "url": "https://developer.arm.com/-/media/Files/downloads/gnu-rm/10.3-2021.07/gcc-arm-none-eabi-10.3-2021.07-mac-10.14.6.tar.bz2",
-            "md5": "42d5f143cdc303d73a3602fa5052c790",
-            "wheel_plat": "macosx_10_14_x86_64",
-        },
-        "linux_x86_64": {
-            "url": "https://developer.arm.com/-/media/Files/downloads/gnu-rm/10.3-2021.07/gcc-arm-none-eabi-10.3-2021.07-x86_64-linux.tar.bz2",
-            "md5": "b56ae639d9183c340f065ae114a30202",
-            "wheel_plat": "manylinux2014_x86_64",
-        },
-        "linux_aarch64": {
-            "url": "https://developer.arm.com/-/media/Files/downloads/gnu-rm/10.3-2021.07/gcc-arm-none-eabi-10.3-2021.07-aarch64-linux.tar.bz2",
-            "md5": "c20b0535d01f8d4418341d893c62a782",
-            "wheel_plat": "manylinux_2_27_aarch64",
-        },
-    },
+    # 10.3-2021.07 & 10.3-2021.10 are both GCC 10.3 releases, as this package versioning only uses the GCC major and minor numbers we ignore this earlier release.
+    # "10.3-2021.07": {
+    #    "win32": {
+    #        "url": "https://developer.arm.com/-/media/Files/downloads/gnu-rm/10.3-2021.07/gcc-arm-none-eabi-10.3-2021.07-win32.zip",
+    #        "md5": "fca12668002f8c52cfa174400fd2d03e",
+    #        "wheel_plat": "win32",
+    #    },
+    #    "mac_x86_64": {
+    #        "url": "https://developer.arm.com/-/media/Files/downloads/gnu-rm/10.3-2021.07/gcc-arm-none-eabi-10.3-2021.07-mac-10.14.6.tar.bz2",
+    #        "md5": "42d5f143cdc303d73a3602fa5052c790",
+    #        "wheel_plat": "macosx_10_14_x86_64",
+    #    },
+    #    "linux_x86_64": {
+    #        "url": "https://developer.arm.com/-/media/Files/downloads/gnu-rm/10.3-2021.07/gcc-arm-none-eabi-10.3-2021.07-x86_64-linux.tar.bz2",
+    #        "md5": "b56ae639d9183c340f065ae114a30202",
+    #        "wheel_plat": "manylinux2014_x86_64",
+    #    },
+    #    "linux_aarch64": {
+    #        "url": "https://developer.arm.com/-/media/Files/downloads/gnu-rm/10.3-2021.07/gcc-arm-none-eabi-10.3-2021.07-aarch64-linux.tar.bz2",
+    #        "md5": "c20b0535d01f8d4418341d893c62a782",
+    #        "wheel_plat": "manylinux_2_27_aarch64",
+    #    },
+    # },
     "10-2020-q4": {
         "win32": {
             "url": "https://developer.arm.com/-/media/Files/downloads/gnu-rm/10-2020q4/gcc-arm-none-eabi-10-2020-q4-major-win32.zip",
@@ -272,4 +273,17 @@ gcc_releases = {
             "wheel_plat": "manylinux2014_aarch64",
         },
     },
+}
+
+gcc_short_versions = {
+    "13.3.Rel1": "13.3",
+    "13.2.Rel1": "13.2",
+    "12.3.Rel1": "12.3",
+    "12.2.Rel1": "12.2",
+    "11.3.Rel1": "11.3",
+    "11.2-2022.02": "11.2",
+    "10.3-2021.10": "10.3",
+    "10-2020-q4": "10.2",
+    "9-2020-q2": "9.3",
+    "9-2019-q4": "9.2",
 }

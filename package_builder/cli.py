@@ -101,7 +101,8 @@ def build(
 
     # Create the package files with the GCC toolchain folder inside
     print("\n[green]Creating Python package files[/green]")
-    package_creator.create_package_files(PACKAGE_SRC_PATH, gcc_path)
+    gcc_short_version = package_creator.generate_package_version(gcc_release_name)
+    package_creator.create_package_files(PACKAGE_SRC_PATH, gcc_path, gcc_short_version)
 
     print("\n[green]Building Python wheel[/green]")
     package_creator.build_python_wheel(
