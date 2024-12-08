@@ -12,7 +12,7 @@ gcc_releases = {
         "win32": {
             "url": "https://developer.arm.com/-/media/Files/downloads/gnu/13.3.rel1/binrel/arm-gnu-toolchain-13.3.rel1-mingw-w64-i686-arm-none-eabi.zip",
             "md5": "39d9882ca0eb475e81170ae826c1435d",
-            "wheel_plat": "win32",
+            "wheel_plat": "win_amd64",
         },
         "mac_x86_64": {
             "url": "https://developer.arm.com/-/media/Files/downloads/gnu/13.3.rel1/binrel/arm-gnu-toolchain-13.3.rel1-darwin-x86_64-arm-none-eabi.tar.xz",
@@ -39,7 +39,7 @@ gcc_releases = {
         "win32": {
             "url": "https://developer.arm.com/-/media/Files/downloads/gnu/13.2.rel1/binrel/arm-gnu-toolchain-13.2.rel1-mingw-w64-i686-arm-none-eabi.zip",
             "md5": "7fd677088038cdf82f33f149e2e943ee",
-            "wheel_plat": "win32",
+            "wheel_plat": "win_amd64",
         },
         "mac_x86_64": {
             "url": "https://developer.arm.com/-/media/Files/downloads/gnu/13.2.rel1/binrel/arm-gnu-toolchain-13.2.rel1-darwin-x86_64-arm-none-eabi.tar.xz",
@@ -66,7 +66,7 @@ gcc_releases = {
         "win32": {
             "url": "https://developer.arm.com/-/media/Files/downloads/gnu/12.3.rel1/binrel/arm-gnu-toolchain-12.3.rel1-mingw-w64-i686-arm-none-eabi.zip",
             "md5": "36c3f864ae8a4ded4a464e67c74f4973",
-            "wheel_plat": "win32",
+            "wheel_plat": "win_amd64",
         },
         "mac_x86_64": {
             "url": "https://developer.arm.com/-/media/Files/downloads/gnu/12.3.rel1/binrel/arm-gnu-toolchain-12.3.rel1-darwin-x86_64-arm-none-eabi.tar.xz",
@@ -93,7 +93,7 @@ gcc_releases = {
         "win32": {
             "url": "https://developer.arm.com/-/media/Files/downloads/gnu/12.2.rel1/binrel/arm-gnu-toolchain-12.2.rel1-mingw-w64-i686-arm-none-eabi.zip",
             "md5": "0122a821c28b200f251cd23d2edc38c5",
-            "wheel_plat": "win32",
+            "wheel_plat": "win_amd64",
         },
         "mac_x86_64": {
             "url": "https://developer.arm.com/-/media/Files/downloads/gnu/12.2.rel1/binrel/arm-gnu-toolchain-12.2.rel1-darwin-x86_64-arm-none-eabi.tar.xz",
@@ -122,7 +122,7 @@ gcc_releases = {
             # Arm"s published MD5 seems incorrect: f1ff0b48304dbc4ff558f0753a3a8860
             # https://community.arm.com/support-forums/f/compilers-and-libraries-forum/53343/arm-gnu-toolchain-11-3-rel1-windows-arm-none-eabi-md5-is-incorrect
             "md5": "b287cf60045910dd56c56cdc2a490049",
-            "wheel_plat": "win32",
+            "wheel_plat": "win_amd64",
         },
         "mac_x86_64": {
             "url": "https://developer.arm.com/-/media/Files/downloads/gnu/11.3.rel1/binrel/arm-gnu-toolchain-11.3.rel1-darwin-x86_64-arm-none-eabi.tar.xz",
@@ -144,7 +144,7 @@ gcc_releases = {
         "win32": {
             "url": "https://developer.arm.com/-/media/Files/downloads/gnu/11.2-2022.02/binrel/gcc-arm-11.2-2022.02-mingw-w64-i686-arm-none-eabi.zip",
             "md5": "e2bb05445200ed8e8c9140fad6a0afb5",
-            "wheel_plat": "win32",
+            "wheel_plat": "win_amd64",
         },
         "mac_x86_64": {
             "url": "https://developer.arm.com/-/media/Files/downloads/gnu/11.2-2022.02/binrel/gcc-arm-11.2-2022.02-darwin-x86_64-arm-none-eabi.tar.xz",
@@ -166,7 +166,7 @@ gcc_releases = {
         "win32": {
             "url": "https://developer.arm.com/-/media/Files/downloads/gnu-rm/10.3-2021.10/gcc-arm-none-eabi-10.3-2021.10-win32.zip",
             "md5": "2bc8f0c4c4659f8259c8176223eeafc1",
-            "wheel_plat": "win32",
+            "wheel_plat": "win_amd64",
         },
         "mac_x86_64": {
             "url": "https://developer.arm.com/-/media/Files/downloads/gnu-rm/10.3-2021.10/gcc-arm-none-eabi-10.3-2021.10-mac.tar.bz2",
@@ -189,7 +189,7 @@ gcc_releases = {
     #    "win32": {
     #        "url": "https://developer.arm.com/-/media/Files/downloads/gnu-rm/10.3-2021.07/gcc-arm-none-eabi-10.3-2021.07-win32.zip",
     #        "md5": "fca12668002f8c52cfa174400fd2d03e",
-    #        "wheel_plat": "win32",
+    #        "wheel_plat": "win_amd64",
     #    },
     #    "mac_x86_64": {
     #        "url": "https://developer.arm.com/-/media/Files/downloads/gnu-rm/10.3-2021.07/gcc-arm-none-eabi-10.3-2021.07-mac-10.14.6.tar.bz2",
@@ -211,7 +211,7 @@ gcc_releases = {
         "win32": {
             "url": "https://developer.arm.com/-/media/Files/downloads/gnu-rm/10-2020q4/gcc-arm-none-eabi-10-2020-q4-major-win32.zip",
             "md5": "5ee6542a2af847934177bc8fa1294c0d",
-            "wheel_plat": "win32",
+            "wheel_plat": "win_amd64",
         },
         "mac_x86_64": {
             "url": "https://developer.arm.com/-/media/Files/downloads/gnu-rm/10-2020q4/gcc-arm-none-eabi-10-2020-q4-major-mac.tar.bz2",
@@ -233,7 +233,7 @@ gcc_releases = {
         "win32": {
             "url": "https://developer.arm.com/-/media/Files/downloads/gnu-rm/9-2020q2/gcc-arm-none-eabi-9-2020-q2-update-win32.zip",
             "md5": "184b3397414485f224e7ba950989aab6",
-            "wheel_plat": "win32",
+            "wheel_plat": "win_amd64",
         },
         "mac_x86_64": {
             "url": "https://developer.arm.com/-/media/Files/downloads/gnu-rm/9-2020q2/gcc-arm-none-eabi-9-2020-q2-update-mac.tar.bz2",
@@ -255,7 +255,7 @@ gcc_releases = {
         "win32": {
             "url": "https://developer.arm.com/-/media/Files/downloads/gnu-rm/9-2019q4/gcc-arm-none-eabi-9-2019-q4-major-win32.zip",
             "md5": "82525522fefbde0b7811263ee8172b10",
-            "wheel_plat": "win32",
+            "wheel_plat": "win_amd64",
         },
         "mac_x86_64": {
             "url": "https://developer.arm.com/-/media/Files/downloads/gnu-rm/9-2019q4/gcc-arm-none-eabi-9-2019-q4-major-mac.tar.bz2",
