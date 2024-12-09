@@ -31,7 +31,7 @@ def clean():
         PROJECT_ROOT / PACKAGE_NAME / "build",
     ]
 
-    print("\nDeleting explicity files and folders...")
+    print("\nDeleting explicitly files and folders...")
     for file in files:
         if file.exists():
             file.unlink()
@@ -61,13 +61,17 @@ def clean():
     gcc_files = itertools.chain(
         PROJECT_ROOT.rglob("gcc-arm-*"),
         PROJECT_ROOT.rglob("arm-gnu-toolchain*"),
+        PACKAGE_SRC_PATH.rglob("arm_none_eabi_*"),
     )
     for file in gcc_files:
+        # Don't delete files or folders in dot directories
         if file.relative_to(PROJECT_ROOT).parts[0].startswith("."):
             continue
+        # Delete compressed files
         if file.is_file() and str(file).endswith((".zip", ".tar.bz2", ".tar.xz")):
             file.unlink()
             print(f"\tDeleted file: {file.relative_to(PROJECT_ROOT)}")
+        # Delete folders that start with these names
         elif file.is_dir():
             shutil.rmtree(file)
             print(f"\tDeleted folder: {file.relative_to(PROJECT_ROOT)}")
@@ -117,7 +121,7 @@ def build(
             PACKAGE_PATH, dist_folder, gcc_release.files["wheel_plat"]
         )
 
-        print(f"\n[green]Package {release_name}) created![/green]")
+        print(f"\n[green]Package {release_name}) created![/green]\n")
 
 
 def main():

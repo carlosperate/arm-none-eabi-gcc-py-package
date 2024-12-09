@@ -94,9 +94,11 @@ def uncompress_toolchain(file_path: Path, destination: Path = Path.cwd()) -> Pat
     if not file_path.is_file():
         raise FileNotFoundError(f"File to uncompress not found: {file_path}")
     # The uncompressed folder will start with the same two words
-    # (separated by '-') as the compressed file
-    uncompressed_folder_start = str(
-        (destination / file_path.stem.split("-")[0]).resolve()
+    # (separated by '-') as the compressed file, or arm_none_eabi_gcc_toolchain
+    uncompressed_folder_start = (
+        str((destination / file_path.stem.split("-")[0]).resolve()),
+        str((destination / "gcc-arm-none-eabi-").resolve()),
+        str((destination / "arm_none_eabi_gcc_toolchain").resolve()),
     )
     for item in destination.iterdir():
         item = item.resolve()
@@ -169,7 +171,10 @@ def create_package_files(
     for root, _, files in os.walk(gcc_path / "bin"):
         for file in files:
             bin_file = os.path.basename(file)
-            func_name = bin_file.replace("arm-none-eabi-", "run_")
+            if bin_file.startswith("arm-none-eabi-"):
+                func_name = bin_file.replace("arm-none-eabi-", "run_")
+            else:
+                func_name = "run_" + bin_file
             func_name = re.sub("[^0-9a-zA-Z_]", "_", func_name)
             bin_files.append((bin_file, func_name))
             print(f"- {bin_file} ({func_name}.py)")

@@ -41,7 +41,7 @@ jobs:
       - name: Get version from pyproject.toml
         id: get_version
         run: |
-          VERSION=$(python -c "import toml; print(toml.load('arm_none_eabi_gcc_toolchain/pyproject.toml')['project']['version'], end='')")
+          VERSION=$(python -c "import tomli; print(tomli.load(open('arm_none_eabi_gcc_toolchain/pyproject.toml', 'rb'))['project']['version'], end='')")
           echo "version=$VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
