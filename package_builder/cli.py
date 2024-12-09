@@ -7,7 +7,7 @@ import typer
 from typing_extensions import Annotated
 from rich import print
 
-from package_builder import package_creator
+from package_builder import package_creator as pc
 from package_builder.package_creator import PACKAGE_NAME, PACKAGE_PATH, PACKAGE_SRC_PATH
 
 
@@ -92,29 +92,32 @@ def build(
     if not PACKAGE_PATH.is_dir() or not PACKAGE_SRC_PATH.is_dir():
         raise FileNotFoundError(f"Package directory not found: {PACKAGE_SRC_PATH}")
 
-    selected_gcc_releases = package_creator.get_gcc_releases(release, os, arch)
+    selected_gcc_releases = pc.get_gcc_releases(release, os, arch)
     for gcc_release in selected_gcc_releases:
         # Perform a clean build for each release
         clean()
 
-        print(f"\n[green]Building GCC release: {gcc_release.release_name} ({gcc_release.os_arch})[/green]")
+        release_name = f"{gcc_release.release_name} ({gcc_release.os_arch}"
+        print(f"\n[green]Building GCC release: {release_name})[/green]")
 
         # Get the GCC release and uncompress it in the package directory
         print("\n[green]Downloading and uncompressing GCC toolchain[/green]")
-        gcc_zip_file = package_creator.download_toolchain(gcc_release.files["url"])
-        gcc_path = package_creator.uncompress_toolchain(gcc_zip_file, PACKAGE_SRC_PATH)
+        gcc_zip_file = pc.download_toolchain(gcc_release.files["url"])
+        gcc_path = pc.uncompress_toolchain(gcc_zip_file, PACKAGE_SRC_PATH)
 
         # Create the package files with the GCC toolchain folder inside
         print("\n[green]Creating Python package files[/green]")
-        package_version = package_creator.generate_package_version(gcc_release.release_name)
-        package_creator.create_package_files(PACKAGE_SRC_PATH, gcc_path, package_version)
+        package_version = pc.generate_package_version(gcc_release.release_name)
+        pc.create_package_files(PACKAGE_SRC_PATH, gcc_path, package_version)
 
         print("\n[green]Building Python wheel[/green]")
-        package_creator.build_python_wheel(
-            PACKAGE_PATH, PROJECT_ROOT / "dist", gcc_release.files["wheel_plat"]
+        dist_folder = PROJECT_ROOT / "dist"
+        dist_folder.mkdir(exist_ok=True)
+        pc.build_python_wheel(
+            PACKAGE_PATH, dist_folder, gcc_release.files["wheel_plat"]
         )
 
-        print(f"\n[green]Package {gcc_release.release_name} ({gcc_release.os_arch}) created![/green]")
+        print(f"\n[green]Package {release_name}) created![/green]")
 
 
 def main():

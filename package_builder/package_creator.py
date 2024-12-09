@@ -11,7 +11,7 @@ from typing import Optional, List
 from collections import namedtuple
 
 
-import toml
+import tomli
 from rich.progress import (
     Progress,
     BarColumn,
@@ -30,7 +30,7 @@ PACKAGE_PATH = Path(__file__).resolve().parents[1] / PACKAGE_NAME
 PACKAGE_SRC_PATH = PACKAGE_PATH / "src" / PACKAGE_NAME
 
 # NameTuple with the GCC info
-GccInfo = namedtuple('GccInfo', ['files', 'release_name', 'os_arch'])
+GccInfo = namedtuple("GccInfo", ["files", "release_name", "os_arch"])
 
 
 def download_toolchain(file_url: str, save_path: Path = Path.cwd()) -> Path:
@@ -221,16 +221,22 @@ def get_gcc_releases(
 
     # We have a special case for os_type and cpu_arch being set to "all"
     # but error if only one of them is set to "all"
-    if (os_type == "all" and cpu_arch != "all") or (os_type != "all" and cpu_arch == "all"):
-        raise ValueError("Both OS type and CPU architecture must be 'all', not just one")
+    if (os_type == "all" and cpu_arch != "all") or (
+        os_type != "all" and cpu_arch == "all"
+    ):
+        raise ValueError(
+            "Both OS type and CPU architecture must be 'all', not just one"
+        )
     if os_type == "all" and cpu_arch == "all":
         gcc_release_all = []
         for release_type in gcc_releases[release_name].keys():
-            gcc_release_all.append(GccInfo(
-                files=gcc_releases[release_name][release_type],
-                release_name=release_name,
-                os_arch=release_type
-            ))
+            gcc_release_all.append(
+                GccInfo(
+                    files=gcc_releases[release_name][release_type],
+                    release_name=release_name,
+                    os_arch=release_type,
+                )
+            )
         return gcc_release_all
 
     # Determine CPU architecture
@@ -264,11 +270,13 @@ def get_gcc_releases(
     else:
         raise ValueError(f"Unrecognised OS: {os_type}")
 
-    return [GccInfo(
-        files=gcc_releases[release_name][release_type],
-        release_name=release_name,
-        os_arch=release_type
-    )]
+    return [
+        GccInfo(
+            files=gcc_releases[release_name][release_type],
+            release_name=release_name,
+            os_arch=release_type,
+        )
+    ]
 
 
 def build_python_wheel(package_path: Path, wheel_dir: Path, wheel_plat: str) -> None:
@@ -281,8 +289,14 @@ def build_python_wheel(package_path: Path, wheel_dir: Path, wheel_plat: str) -> 
     if not package_path.is_dir():
         raise FileNotFoundError(f"Package directory not found: {package_path}")
 
-    # To later find the wheel we check for any new files added to the wheel directory
-    initial_files = set(wheel_dir.iterdir())
+    # Generate the expected wheel file name from the pyproject.toml
+    with open(package_path / "pyproject.toml", "rb") as file:
+        pyproject_toml = tomli.load(file)
+    project_name = pyproject_toml["project"]["name"]
+    project_version = pyproject_toml["project"]["version"]
+    wheel_path = wheel_dir / f"{project_name}-{project_version}-py3-none-any.whl"
+    if wheel_path.is_file():
+        raise FileExistsError(f"Wheel file about to be created already exists: {wheel_path}")
 
     subprocess.run(
         [
@@ -298,12 +312,8 @@ def build_python_wheel(package_path: Path, wheel_dir: Path, wheel_plat: str) -> 
         cwd=package_path,
     )
 
-    # Generate the expected wheel file name from the pyproject.toml
-    with open(package_path / "pyproject.toml", "r") as file:
-        pyproject_toml = toml.load(file)
-    wheel_path = wheel_dir / f"{pyproject_toml['project']['name']}-{pyproject_toml['project']['version']}-py3-none-any.whl"
     if not wheel_path.is_file():
-        raise FileNotFoundError(f"Wheel file not found in: {wheel_dir}")
+        raise FileNotFoundError(f"Wheel file not created: {wheel_path}")
 
     subprocess.run(
         [
@@ -333,9 +343,13 @@ def build_package_local_machine() -> None:
         gcc_zip_file = download_toolchain(gcc_release.files["url"])
         gcc_path = uncompress_toolchain(gcc_zip_file, PACKAGE_SRC_PATH)
         create_package_files(
-            PACKAGE_SRC_PATH, gcc_path, generate_package_version(gcc_release.release_name)
+            PACKAGE_SRC_PATH,
+            gcc_path,
+            generate_package_version(gcc_release.release_name),
         )
-        build_python_wheel(PACKAGE_PATH, PACKAGE_PATH / "dist", gcc_release.files["wheel_plat"])
+        build_python_wheel(
+            PACKAGE_PATH, PACKAGE_PATH / "dist", gcc_release.files["wheel_plat"]
+        )
 
 
 if __name__ == "__main__":

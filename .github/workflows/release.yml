@@ -1,0 +1,56 @@
+name: Build and Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        gcc:
+          - "13.3.Rel1"
+          - "13.2.Rel1"
+          - "12.3.Rel1"
+          - "12.2.Rel1"
+          - "11.3.Rel1"
+          - "11.2-2022.02"
+          - "10.3-2021.10"
+          - "10-2020-q4"
+          - "9-2020-q2"
+          - "9-2019-q4"
+      fail-fast: false
+    name: ${{ matrix.gcc }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build all platform packages for this release
+        run: python -m package_builder build --release ${{ matrix.gcc }} --os all --arch all
+
+      - name: Get version from pyproject.toml
+        id: get_version
+        run: |
+          VERSION=$(python -c "import toml; print(toml.load('arm_none_eabi_gcc_toolchain/pyproject.toml')['project']['version'], end='')")
+          echo "version=$VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        if: steps.check_release.outputs.release_exists != 'true'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: v${{ steps.get_version.outputs.version }}
+          name: Release v${{ steps.get_version.outputs.version }}
+          skipIfReleaseExists: true
+          replacesArtifacts: false
+          artifacts: "dist/*.whl"
