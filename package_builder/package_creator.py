@@ -98,7 +98,7 @@ def uncompress_toolchain(file_path: Path, destination: Path = Path.cwd()) -> Pat
     uncompressed_folder_start = (
         str((destination / file_path.stem.split("-")[0]).resolve()),
         str((destination / "gcc-arm-none-eabi-").resolve()),
-        str((destination / "arm_none_eabi_gcc_toolchain").resolve()),
+        str((destination / "arm_none_eabi_gcc_").resolve()),
     )
     for item in destination.iterdir():
         item = item.resolve()
@@ -108,14 +108,28 @@ def uncompress_toolchain(file_path: Path, destination: Path = Path.cwd()) -> Pat
             )
 
     if str(file_path).endswith(".zip"):
+        # Special case the 9-2020-q2 and 9-2019-q4 windows zip because they don't have a top folder
+        bad_zip_filename1 = os.path.basename(gcc_releases["9-2020-q2"]["win32"]["url"])
+        bad_zip_filename2 = os.path.basename(gcc_releases["9-2019-q4"]["win32"]["url"])
+        if str(file_path).endswith(bad_zip_filename1):
+            final_destination = destination / bad_zip_filename1.replace(".zip", "")
+            final_destination.mkdir(exist_ok=False)
+        elif str(file_path).endswith(bad_zip_filename2):
+            final_destination = destination / bad_zip_filename2.replace(".zip", "")
+            final_destination.mkdir(exist_ok=False)
+        else:
+            final_destination = destination
         with zipfile.ZipFile(file_path, "r") as zip_ref:
-            zip_ref.extractall(path=destination)
+            zip_ref.extractall(path=final_destination)
+
     elif str(file_path).endswith(".tar.bz2"):
         with tarfile.open(file_path, "r:bz2") as tar_ref:
             tar_ref.extractall(path=destination)
+
     elif str(file_path).endswith(".tar.xz"):
         with tarfile.open(file_path, "r:xz") as tar_ref:
             tar_ref.extractall(path=destination)
+
     else:
         raise ValueError(f"Unsupported file extension: {file_path}")
 
