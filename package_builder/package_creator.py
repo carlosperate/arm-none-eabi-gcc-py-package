@@ -315,7 +315,9 @@ def build_python_wheel(package_path: Path, wheel_dir: Path, wheel_plat: str) -> 
     project_version = pyproject_toml["project"]["version"]
     wheel_path = wheel_dir / f"{project_name}-{project_version}-py3-none-any.whl"
     if wheel_path.is_file():
-        raise FileExistsError(f"Wheel file about to be created already exists: {wheel_path}")
+        raise FileExistsError(
+            f"Wheel file about to be created already exists: {wheel_path}"
+        )
 
     subprocess.run(
         [

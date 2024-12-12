@@ -7,6 +7,15 @@ import typer
 from typing_extensions import Annotated
 from rich import print
 
+try:
+    from package_builder import package_creator as pc
+except ImportError:
+    # This is a bit of a hack, when running as a script, the package_builder
+    # module is not available, so add the directory to the sys.path
+    import sys
+
+    sys.path.append(str(Path(__file__).resolve().parents[1]))
+
 from package_builder import package_creator as pc
 from package_builder.package_creator import PACKAGE_NAME, PACKAGE_PATH, PACKAGE_SRC_PATH
 
@@ -122,6 +131,17 @@ def build(
         )
 
         print(f"\n[green]Package {release_name}) created![/green]\n")
+
+
+@app.command()
+def get_package_version(gcc_release_name: str):
+    """
+    Get the package version string for the specified GCC release.
+    """
+    # Check the release name exists (all releases have win version), but ignore result
+    _ = pc.get_gcc_releases(gcc_release_name, "win", "x86_64")
+    package_version = pc.generate_package_version(gcc_release_name)
+    print(f"{package_version}")
 
 
 def main():
