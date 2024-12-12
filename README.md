@@ -13,23 +13,21 @@ This is still a work-in-progress and doesn't work yet.
 
 - [x] Update wheels to have platform labels
 - [x] Set up versioning
-- [ ] Create GH Action workflow to build and publish the wheels in GH Releases
-- [ ] Create a static simple repository ([PEP 503](https://peps.python.org/pep-0503/)) to host the wheels via GitHub (releases+pages)
+- [x] Create GH Action workflow to build and publish the wheels to GH Releases
+- [ ] Create GH Action workflow to test the built wheels in each OS/arch
+- [ ] Create a static simple repository ([PEP 503](https://peps.python.org/pep-0503/)) that fetches the wheels from GH Releases
+- [ ] Create GH Action workflow to publish the package repository to GH Pages
 - [ ] Use or fork [wheel-stub](https://github.com/wheel-next/wheel-stub/) to be able to publish source packages to PyPI
 - [ ] Keep an eye on [PEP 759 – External Wheel Hosting](https://peps.python.org/pep-0759/)
 
 ## Versioning
 
-The package version follows the format, which combines the GCC version and the
-`package_builder` version:
-
-```
-MAJOR.MINOR.PATCH
-```
-Where:
+The package version follows `MAJOR.MINOR.PATCH` format, but it combines the
+GCC version and the `package_builder` versions, where:
 - MAJOR version is the GCC major version
 - MINOR version is the GCC minor version
-- PATCH version is version of `package_builder` used to create the package
+- PATCH version is a single number indicating the version of `package_builder`
+  used to create the package
 
 So for example:
 
@@ -40,8 +38,9 @@ So for example:
    └────────── GCC major.minor version
 ```
 
-This allows version locking to a specific GCC version and the latest
-`package_builder` version, e.g. `~=13.3`/`==13.3.*`.
+This allows version locking to a specific GCC version and be able to fetch the
+latest `package_builder` (which might include bug fixes in the packaging),
+e.g. `~=13.3`/`==13.3.*`.
 
 ## Building the package
 
