@@ -189,6 +189,7 @@ def create_package_files(
                 func_name = bin_file.replace("arm-none-eabi-", "run_")
             else:
                 func_name = "run_" + bin_file
+            func_name = func_name.replace(".exe", "")
             func_name = re.sub("[^0-9a-zA-Z_]", "_", func_name)
             bin_files.append((bin_file, func_name))
             print(f"- {bin_file} ({func_name}.py)")
@@ -208,7 +209,7 @@ def create_package_files(
     pyproject_scripts = []
     for bin_file, func_name in bin_files:
         pyproject_scripts.append(
-            f'"{bin_file}" = "{PACKAGE_NAME}.{func_name}:{func_name}"'
+            f'"{bin_file.replace(".exe", "")}" = "{PACKAGE_NAME}.{func_name}:{func_name}"'
         )
     with open(package_path.parents[1] / "pyproject.toml", "w") as file:
         file.write(

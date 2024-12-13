@@ -125,5 +125,5 @@ jobs:
       #- name: Setup tmate session
       #  uses: mxschmitt/action-tmate@v3
 
-      #- name: Verify Installation
-      #  run: arm-none-eabi-gcc --version
+      - name: Verify Installation
+        run: arm-none-eabi-gcc --version
