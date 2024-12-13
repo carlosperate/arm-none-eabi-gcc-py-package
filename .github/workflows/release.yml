@@ -119,11 +119,30 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
+      - name: Verify GCC arm-none-eabi is not present yet
+        shell: bash
+        run: |
+          if arm-none-eabi-gcc --version; then
+            exit 1
+          else
+            exit 0
+          fi
+
       - name: Install arm_none_eabi_gcc_toolchain from wheels
         run: pip install --no-index --find-links=wheels/ arm_none_eabi_gcc_toolchain
 
       #- name: Setup tmate session
       #  uses: mxschmitt/action-tmate@v3
 
-      #- name: Verify Installation
-      #  run: arm-none-eabi-gcc --version
+      - name: Verify GCC Installation
+        run: arm-none-eabi-gcc --version
+
+      - name: Clone STM32 project
+        uses: actions/checkout@v4
+        with:
+          repository: 'trebisky/stm32f103'
+          ref: 7cfe5feaf02c653352331374d2ad178eb04efde7
+          path: 'stm32f103/'
+      - name: Build simple blinky project
+        working-directory: ./stm32f103/blink1/
+        run: make all

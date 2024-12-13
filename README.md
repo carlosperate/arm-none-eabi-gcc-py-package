@@ -14,10 +14,10 @@ This is still a work-in-progress and doesn't work yet.
 - [x] Update wheels to have platform labels
 - [x] Set up versioning
 - [x] Create GH Action workflow to build and publish the wheels to GH Releases
-- [ ] Create GH Action workflow to test the built wheels in each OS/arch
+- [x] Create GH Action workflow to test the built wheels in each OS/arch
 - [ ] Create a static simple repository ([PEP 503](https://peps.python.org/pep-0503/)) that fetches the wheels from GH Releases
 - [ ] Create GH Action workflow to publish the package repository to GH Pages
-- [ ] Use or fork [wheel-stub](https://github.com/wheel-next/wheel-stub/) to be able to publish source packages to PyPI
+- [ ] Use/fork [wheel-stub](https://github.com/wheel-next/wheel-stub/) to publish source packages to PyPI that pull these wheels externally hosted
 - [ ] Keep an eye on [PEP 759 – External Wheel Hosting](https://peps.python.org/pep-0759/)
 
 ## Versioning
