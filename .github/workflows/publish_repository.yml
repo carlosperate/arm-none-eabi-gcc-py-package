@@ -1,0 +1,43 @@
+name: Deploy Package Repository
+
+on: [workflow_dispatch]
+
+jobs:
+  build-repo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set Up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build Static Simple Repository
+        run: python -m simple_repository_generator "carlosperate/arm-none-eabi-gcc-py-package"
+
+      - name: Upload Artifact
+        id: deployment
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: simple_repository_static/
+
+
+  deploy:
+    needs: build-repo
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
