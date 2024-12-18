@@ -16,6 +16,9 @@ arm_none_eabi_gcc_toolchain/MANIFEST.in
 arm_none_eabi_gcc_toolchain/pyproject.toml
 arm_none_eabi_gcc_toolchain/src/arm_none_eabi_gcc_toolchain/run_*.py
 
+# Simple repository output files
+simple_repository_static/*
+
 ####################
 # Editor/IDE files #
 ####################
