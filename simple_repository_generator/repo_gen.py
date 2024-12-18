@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-import os
 import shutil
 import hashlib
 from pathlib import Path
@@ -36,19 +35,31 @@ def get_gh_releases_wheel_urls(repo_name: str, token=None) -> Dict[str, List[Whe
 
 def calculate_sha256(url: str) -> str:
     """Calculates the SHA-256 hash of a file available at the given URL."""
-    sha256_hash = hashlib.sha256()
-    response = requests.get(url, stream=True)
-    total_size = int(response.headers.get("content-length", 0))
-    chunk_size = 8192
 
-    print(f"\tDownloading & hashing: {url.split('/')[-1]}")
-    with Progress() as progress:
-        task = progress.add_task(f"\t\t{(total_size/(1024*1024)):.2f} MB ", total=total_size)
-        for chunk in response.iter_content(chunk_size=chunk_size):
-            sha256_hash.update(chunk)
-            progress.update(task, advance=len(chunk))
+    def _calculate_sha256(url: str) -> str:
+        sha256_hash = hashlib.sha256()
+        response = requests.get(url, stream=True)
+        total_size = int(response.headers.get("content-length", 0))
+        chunk_size = 8192
 
-    return sha256_hash.hexdigest()
+        print(f"\tDownloading & hashing: {url.split('/')[-1]}")
+        with Progress() as progress:
+            task = progress.add_task(f"\t\t{(total_size/(1024*1024)):.2f} MB ", total=total_size)
+            for chunk in response.iter_content(chunk_size=chunk_size):
+                sha256_hash.update(chunk)
+                progress.update(task, advance=len(chunk))
+
+        return sha256_hash.hexdigest()
+
+    for i in range(1, 4):
+        try:
+            return _calculate_sha256(url)
+        except requests.exceptions.ConnectionError:
+            print(f"\tFailed attempt {i} to download file at {url}.")
+            if i == 3:
+                raise
+            else:
+                print("\tRetrying...")
 
 
 def gen_repo_html(packages: Dict[str, Dict[str, List[WheelURl]]], output: Path) -> str:

@@ -89,8 +89,8 @@ this repository.
 
 To generate the HTML output, run the following command:
 
-```
-python -m simple_repository_regenerator carlosperate/arm-none-eabi-gcc-toolchain
+```bash
+python -m simple_repository_generator "carlosperate/arm-none-eabi-gcc-py-package"
 ```
 
 ## License
