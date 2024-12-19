@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding:utf-8 -*-
 import shutil
 import itertools
 from pathlib import Path
@@ -17,7 +19,7 @@ except ImportError:
     sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from package_builder import package_creator as pc
-from package_builder.package_creator import PACKAGE_NAME, PACKAGE_PATH, PACKAGE_SRC_PATH
+from package_builder.package_creator import PACKAGE_NAME, PROJECT_PATH, PACKAGE_PATH
 
 
 app = typer.Typer()
@@ -70,7 +72,7 @@ def clean():
     gcc_files = itertools.chain(
         PROJECT_ROOT.rglob("gcc-arm-*"),
         PROJECT_ROOT.rglob("arm-gnu-toolchain*"),
-        PACKAGE_SRC_PATH.rglob("arm_none_eabi_*"),
+        PACKAGE_PATH.rglob("arm_none_eabi_*"),
     )
     for file in gcc_files:
         # Don't delete files or folders in dot directories
@@ -101,9 +103,11 @@ def build(
     """
     print("\n[green]Start building Python package/s[/green]")
 
-    print(f"Package directory: {PACKAGE_PATH.relative_to(Path.cwd())}\n")
-    if not PACKAGE_PATH.is_dir() or not PACKAGE_SRC_PATH.is_dir():
-        raise FileNotFoundError(f"Package directory not found: {PACKAGE_SRC_PATH}")
+    print(f"Package directory: {PROJECT_PATH.relative_to(Path.cwd())}\n")
+    if not PROJECT_PATH.is_dir() or not PACKAGE_PATH.is_dir():
+        raise FileNotFoundError(
+            f"Project/Package directory not found:\n\t{PROJECT_PATH}\n\t{PACKAGE_PATH}"
+        )
 
     selected_gcc_releases = pc.get_gcc_releases(release, os, arch)
     for gcc_release in selected_gcc_releases:
@@ -116,18 +120,18 @@ def build(
         # Get the GCC release and uncompress it in the package directory
         print("\n[green]Downloading and uncompressing GCC toolchain[/green]")
         gcc_zip_file = pc.download_toolchain(gcc_release.files["url"])
-        gcc_path = pc.uncompress_toolchain(gcc_zip_file, PACKAGE_SRC_PATH)
+        gcc_path = pc.uncompress_toolchain(gcc_zip_file, PACKAGE_PATH)
 
         # Create the package files with the GCC toolchain folder inside
         print("\n[green]Creating Python package files[/green]")
         package_version = pc.generate_package_version(gcc_release.release_name)
-        pc.create_package_files(PACKAGE_SRC_PATH, gcc_path, package_version)
+        pc.create_package_files(PACKAGE_PATH, gcc_path, package_version)
 
         print("\n[green]Building Python wheel[/green]")
         dist_folder = PROJECT_ROOT / "dist"
         dist_folder.mkdir(exist_ok=True)
         pc.build_python_wheel(
-            PACKAGE_PATH, dist_folder, gcc_release.files["wheel_plat"]
+            PROJECT_PATH, dist_folder, gcc_release.files["wheel_plat"]
         )
 
         print(f"\n[green]Package {release_name}) created![/green]\n")

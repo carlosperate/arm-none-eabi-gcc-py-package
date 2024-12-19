@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding:utf-8 -*-
+
 executable_launcher = """
 import os
 import sys
@@ -32,7 +35,7 @@ requires = ["setuptools >= 61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "arm_none_eabi_gcc_toolchain"
+name = "arm-none-eabi-gcc-toolchain"
 version = "{version}"
 description = "Arm GNU Toolchain (arm-none-eabi-gcc)"
 authors = [

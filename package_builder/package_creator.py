@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding:utf-8 -*-
 import os
 import re
 import sys
@@ -25,9 +27,10 @@ from package_builder import __version__ as package_builder_version
 from package_builder.gcc_releases import gcc_releases, gcc_short_versions
 
 
+PROJECT_NAME = "arm-none-eabi-gcc-toolchain"
 PACKAGE_NAME = "arm_none_eabi_gcc_toolchain"
-PACKAGE_PATH = Path(__file__).resolve().parents[1] / PACKAGE_NAME
-PACKAGE_SRC_PATH = PACKAGE_PATH / "src" / PACKAGE_NAME
+PROJECT_PATH = Path(__file__).resolve().parents[1] / PROJECT_NAME
+PACKAGE_PATH = PROJECT_PATH / "src" / PACKAGE_NAME
 
 # NameTuple with the GCC info
 GccInfo = namedtuple("GccInfo", ["files", "release_name", "os_arch"])
@@ -312,7 +315,7 @@ def build_python_wheel(package_path: Path, wheel_dir: Path, wheel_plat: str) -> 
     # Generate the expected wheel file name from the pyproject.toml
     with open(package_path / "pyproject.toml", "rb") as file:
         pyproject_toml = tomli.load(file)
-    project_name = pyproject_toml["project"]["name"]
+    project_name = pyproject_toml["project"]["name"].replace("-", "_")
     project_version = pyproject_toml["project"]["version"]
     wheel_path = wheel_dir / f"{project_name}-{project_version}-py3-none-any.whl"
     if wheel_path.is_file():
@@ -354,23 +357,25 @@ def build_python_wheel(package_path: Path, wheel_dir: Path, wheel_plat: str) -> 
 
 
 def build_package_local_machine() -> None:
-    print(f"Package directory: {PACKAGE_PATH.relative_to(Path.cwd())}")
-    if not PACKAGE_PATH.is_dir() or not PACKAGE_SRC_PATH.is_dir():
-        raise FileNotFoundError(f"Package directory not found: {PACKAGE_SRC_PATH}")
+    print(f"Project directory: {PROJECT_PATH.relative_to(Path.cwd())}")
+    if not PROJECT_PATH.is_dir() or not PACKAGE_PATH.is_dir():
+        raise FileNotFoundError(
+            f"Project/Package directory not found:\n\t{PROJECT_PATH}\n\t{PACKAGE_PATH}"
+        )
 
     gcc_releases_list = get_gcc_releases()
     for gcc_release in gcc_releases_list:
         print(f"GCC release: {gcc_release.release_name} ({gcc_release.arch})\n")
 
         gcc_zip_file = download_toolchain(gcc_release.files["url"])
-        gcc_path = uncompress_toolchain(gcc_zip_file, PACKAGE_SRC_PATH)
+        gcc_path = uncompress_toolchain(gcc_zip_file, PACKAGE_PATH)
         create_package_files(
-            PACKAGE_SRC_PATH,
+            PACKAGE_PATH,
             gcc_path,
             generate_package_version(gcc_release.release_name),
         )
         build_python_wheel(
-            PACKAGE_PATH, PACKAGE_PATH / "dist", gcc_release.files["wheel_plat"]
+            PROJECT_PATH, PROJECT_PATH / "dist", gcc_release.files["wheel_plat"]
         )
 
 

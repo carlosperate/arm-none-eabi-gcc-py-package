@@ -128,8 +128,8 @@ jobs:
             exit 0
           fi
 
-      - name: Install arm_none_eabi_gcc_toolchain from wheels
-        run: pip install --no-index --find-links=wheels/ arm_none_eabi_gcc_toolchain
+      - name: Install arm-none-eabi-gcc-toolchain from wheels
+        run: pip install --no-index --find-links=wheels/ arm-none-eabi-gcc-toolchain
 
       #- name: Setup tmate session
       #  uses: mxschmitt/action-tmate@v3

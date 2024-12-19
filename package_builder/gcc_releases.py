@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding:utf-8 -*-
+
 # The OS tag is used to specify the Python wheel platform for which the toolchain is built.
 # This info can be found in the GCC release notes.
 # For Linux, the manylinux_x_y_arch tag uses the Glibc version x.y and the architecture arch.
