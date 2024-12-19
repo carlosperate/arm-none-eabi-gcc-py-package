@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-import shutil
+import sys
 import hashlib
 from pathlib import Path
 from typing import Dict, List
@@ -8,7 +8,12 @@ from collections import namedtuple
 
 import requests
 from github import Github
-from rich.progress import Progress
+from rich.progress import Progress, BarColumn, DownloadColumn, TransferSpeedColumn
+
+# A bit of a hack, ensure the git repo root is in the PATH to be able to reach the package_builder module
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+
+from package_builder.package_creator import PROJECT_NAME
 
 
 WheelURl = namedtuple("Wheel", ["name", "url", "sha256"])
@@ -43,8 +48,14 @@ def calculate_sha256(url: str) -> str:
         chunk_size = 8192
 
         print(f"\tDownloading & hashing: {url.split('/')[-1]}")
-        with Progress() as progress:
-            task = progress.add_task(f"\t\t{(total_size/(1024*1024)):.2f} MB ", total=total_size)
+        with Progress(
+            "[progress.description]{task.description}",
+            BarColumn(),
+            "[progress.percentage]{task.percentage:>3.0f}%",
+            DownloadColumn(),
+            TransferSpeedColumn(),
+        ) as progress:
+            task = progress.add_task(f"{' ' * 12}", total=total_size)
             for chunk in response.iter_content(chunk_size=chunk_size):
                 sha256_hash.update(chunk)
                 progress.update(task, advance=len(chunk))
@@ -64,11 +75,6 @@ def calculate_sha256(url: str) -> str:
 
 def gen_repo_html(packages: Dict[str, Dict[str, List[WheelURl]]], output: Path) -> str:
     """Generate HTML files for the simple repository."""
-    if output.exists():
-        if not output.is_dir():
-            raise NotADirectoryError(f"Output path '{output}' is not a directory.")
-        else:
-            shutil.rmtree(output)
     output.mkdir(parents=True, exist_ok=False)
 
     # Generate root index.html with links to each package
@@ -102,7 +108,7 @@ def gen_repo_html(packages: Dict[str, Dict[str, List[WheelURl]]], output: Path) 
             f.write("</head>\n")
             f.write("<body>\n\t")
             f.write(f"<h1>{title}</h1>\n\t")
-            f.write("<br />\n".join(version_links))
+            f.write("<br />\n\t".join(version_links))
             f.write("\n</body>\n</html>")
 
 
@@ -111,5 +117,5 @@ def generate_simple_repository(repo: str, output: Path) -> None:
     releases_wheels = get_gh_releases_wheel_urls(repo)
     print("\tDone.\n")
     print(f"Generating HTML file in: {output}")
-    gen_repo_html({"arm_none_eabi_gcc_toolchain": releases_wheels}, output)
+    gen_repo_html({PROJECT_NAME: releases_wheels}, output)
     print("\tDone.")

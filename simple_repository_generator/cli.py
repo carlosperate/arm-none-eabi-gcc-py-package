@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
+import shutil
 from pathlib import Path
 from typing import Optional
 
@@ -35,7 +36,13 @@ def generate(
     :param overwrite: Overwrite the output folder if it exists.
     """
     print(f"Generating simple repository from GH Releases in: {repo}")
-    if not overwrite and output.exists():
+    if overwrite:
+        if output.exists():
+            if not output.is_dir():
+                raise NotADirectoryError(f"Output path '{output}' is not a directory.")
+            else:
+                shutil.rmtree(output)
+    elif output.exists():
         raise FileExistsError(
             f"Output path {output} already exists, use --overwrite to overwrite it."
         )
