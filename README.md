@@ -7,24 +7,42 @@ into a Python package that can be easily installed via pip.
 The resulting Python package includes the full toolchain and adds its binaries
 to the Python environment path.
 
-This is still a work-in-progress and doesn't work yet.
+## Current project state
 
+> [!CAUTION]
+> This is still a work-in-progress, the package is not yet available on PyPI,
+> and any pre-release versions installed right now might be broken.
+
+There is currently a simple repository with the package available at
+https://carlosperate.github.io/arm-none-eabi-gcc-py-package.
+
+To install the package using this repository:
 ```
 pip install arm-none-eabi-gcc-toolchain --extra-index-url https://carlosperate.github.io/arm-none-eabi-gcc-py-package
 ```
 
-## TODO
+### TODO
 
-- [x] Update wheels to have platform labels
-- [x] Set up versioning
-- [x] Create GH Action workflow to build and publish the wheels to GH Releases
-- [x] Create GH Action workflow to test the built wheels in each OS/arch
-- [x] Create a static simple repository ([PEP 503](https://peps.python.org/pep-0503/)) that fetches the wheels from GH Releases
-- [x] Create GH Action workflow to publish the package repository to GH Pages
-- [ ] Use/fork [wheel-stub](https://github.com/wheel-next/wheel-stub/) to publish source packages to PyPI that pull these wheels externally hosted
+- [ ] Use or fork [wheel-stub](https://github.com/wheel-next/wheel-stub/) to
+  publish source packages to PyPI that pull these wheels externally hosted
 - [ ] Keep an eye on [PEP 759 – External Wheel Hosting](https://peps.python.org/pep-0759/)
 
-## Versioning
+## Versions
+
+| GCC Version  | Python Package Version | Win x86_64 | Linux x86_64 | Linux aarch64 |  macOS x86_64 | macOS arm64 |
+|--------------|------------------------|------------|--------------|---------------|---------------|-------------|
+| 13.3.Rel1    | 13.3.*                 | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 13.2.Rel1    | 13.2.*                 | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 12.3.Rel1    | 12.3.*                 | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 12.2.Rel1    | 12.2.*                 | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 11.3.Rel1    | 11.3.*                 | ✅ | ✅ | ✅ | ✅ | ❌ |
+| 11.2-2022.02 | 11.2.*                 | ✅ | ✅ | ✅ | ✅ | ❌ |
+| 10.3-2021.10 | 10.3.*                 | ✅ | ✅ | ✅ | ✅ | ❌ |
+| 10-2020-q4   | 10.2.*                 | ✅ | ✅ | ✅ | ✅ | ❌ |
+| 9-2020-q2    | 9.3.*                  | ✅ | ✅ | ✅ | ✅ | ❌ |
+| 9-2019-q4    | 9.2.*                  | ✅ | ✅ | ✅ | ✅ | ❌ |
+
+### Versioning scheme
 
 The package version follows `MAJOR.MINOR.PATCH` format, but it combines the
 GCC version and the `package_builder` versions, where:
@@ -48,7 +66,7 @@ e.g. `~=13.3`/`==13.3.*`.
 
 ## Project/repository structure
 
-There are multiple folders in this repository to serve different facets of
+There are multiple folders in this repository to serve different aspects of
 this package creation and distribution:
 
 - `arm-none-eabi-gcc-toolchain`: Contains the skeleton code for the Python
@@ -67,12 +85,12 @@ this package creation and distribution:
 
 ## Building the package
 
-A python application is provided in the `package_builder` folder to
-build the package.
+The `package_builder` folder contains the Python scripts needed to build
+the package.
 
-This application downloads an Arm GCC release, extracts it within the
+This script downloads an Arm GCC release, extracts it within the
 `arm-none-eabi-gcc-toolchain` package folder, creates the additional Python
-files, and builds the `arm_none_eabi_gcc_toolchain` package.
+files required for the package, and builds it.
 
 Install the builder dependencies (it's recommended to use a virtual environment):
 
@@ -83,15 +101,21 @@ pip install -r requirements.txt
 Run the builder:
 
 ```bash
-python -m package_builder build
+python -m package_builder build --release <name_of_release> --os <operating system> --arch <cpu architecture>
 ```
+
+Options are:
+- `--release`: The GCC release name as shown in the [versions section](#versions)
+- `--os`: `linux`, `mac`, or `win`
+- `--arch`: `x86_64` or `aarch64`/`arm64`
 
 ## Building the Simple Repository
 
 The `simple_repository_regenerator` folder contains the Python scripts
-used to generate a [PEP 503](https://peps.python.org/pep-0503/) compliant
-static site that points to the wheels stored in the GitHub Releases from
-this repository.
+used to generate a [PEP 503](https://peps.python.org/pep-0503/) and
+[PEP 629](https://peps.python.org/pep-0629/) compliant
+static python package repository site that points to the wheels stored in
+the GitHub Releases from this repository.
 
 To generate the HTML output, run the following command:
 

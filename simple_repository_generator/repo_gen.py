@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
+import re
 import sys
 import hashlib
 from pathlib import Path
@@ -17,6 +18,10 @@ from package_builder.package_creator import PROJECT_NAME
 
 
 WheelURl = namedtuple("Wheel", ["name", "url", "sha256"])
+
+
+def normalise_project_name(name):
+    return re.sub(r"[-_.]+", "-", name).lower()
 
 
 def get_gh_releases_wheel_urls(repo_name: str, token=None) -> Dict[str, List[WheelURl]]:
@@ -80,11 +85,13 @@ def gen_repo_html(packages: Dict[str, Dict[str, List[WheelURl]]], output: Path) 
     # Generate root index.html with links to each package
     package_links = []
     for package in packages:
-        href = f"{package}/"
-        package_links.append(f'<a href="{href}">{package}</a>')
+        package_name = normalise_project_name(package)
+        href = f"{package_name}/"
+        package_links.append(f'<a href="{href}">{package_name}</a>')
     with open(output / "index.html", "w") as f:
         f.write("<!DOCTYPE html>\n<html>\n")
         f.write("<head>\n")
+        f.write('\t<meta name="pypi:repository-version" content="1.0">\n')
         f.write('\t<title>Simple Index</title>\n\t<meta charset="UTF-8" />\n')
         f.write("</head>\n")
         f.write("<body>\n\t")
@@ -93,17 +100,19 @@ def gen_repo_html(packages: Dict[str, Dict[str, List[WheelURl]]], output: Path) 
 
     # Generate file pages
     for package in packages:
+        package_name = normalise_project_name(package)
         version_links = []
         for version, urls in packages[package].items():
             for wheel_url in urls:
                 href = f"{wheel_url.url}#sha256={wheel_url.sha256}"
                 version_links.append(f'<a href="{href}">{wheel_url.name}</a>')
-        package_path = output / f"{package}"
+        package_path = output / f"{package_name}"
         package_path.mkdir(parents=False, exist_ok=True)
         with open(package_path / "index.html", "w") as f:
-            title = f"Links for {package}"
+            title = f"Links for {package_name}"
             f.write(f"<!DOCTYPE html>\n<html>\n")
             f.write("<head>\n")
+            f.write('\t<meta name="pypi:repository-version" content="1.0">\n')
             f.write(f'\t<title>{title}</title>\n\t<meta charset="UTF-8" />\n')
             f.write("</head>\n")
             f.write("<body>\n\t")
