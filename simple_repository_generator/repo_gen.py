@@ -5,7 +5,7 @@ import sys
 import hashlib
 from pathlib import Path
 from typing import Dict, List
-from collections import namedtuple
+from dataclasses import dataclass
 
 import requests
 from github import Github
@@ -17,14 +17,21 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 from package_builder.package_creator import PROJECT_NAME
 
 
-WheelURl = namedtuple("Wheel", ["name", "url", "sha256"])
+@dataclass
+class WheelData:
+    name: str
+    url: str
+    sha256: str
+    python_requires: str = "&gt;=3.6"  # Default to Python 3.6+
 
 
 def normalise_project_name(name):
     return re.sub(r"[-_.]+", "-", name).lower()
 
 
-def get_gh_releases_wheel_urls(repo_name: str, token=None) -> Dict[str, List[WheelURl]]:
+def get_gh_releases_wheel_urls(
+    repo_name: str, token=None
+) -> Dict[str, List[WheelData]]:
     """Get wheel URLs from GitHub Releases."""
     gh = Github(token) if token else Github()
     repo = gh.get_repo(repo_name)
@@ -34,7 +41,7 @@ def get_gh_releases_wheel_urls(repo_name: str, token=None) -> Dict[str, List[Whe
         for asset in release.get_assets():
             if asset.name.endswith(".whl"):
                 wheel_files[release.tag_name].append(
-                    WheelURl(
+                    WheelData(
                         name=asset.name,
                         url=asset.browser_download_url,
                         sha256=calculate_sha256(asset.browser_download_url),
@@ -78,7 +85,7 @@ def calculate_sha256(url: str) -> str:
                 print("\tRetrying...")
 
 
-def gen_repo_html(packages: Dict[str, Dict[str, List[WheelURl]]], output: Path) -> str:
+def gen_repo_html(packages: Dict[str, Dict[str, List[WheelData]]], output: Path) -> str:
     """Generate HTML files for the simple repository."""
     output.mkdir(parents=True, exist_ok=False)
 
@@ -96,16 +103,18 @@ def gen_repo_html(packages: Dict[str, Dict[str, List[WheelURl]]], output: Path) 
         f.write("</head>\n")
         f.write("<body>\n\t")
         f.write("\n\t".join(package_links))
-        f.write("\n</body>\n</html>")
+        f.write("\n</body>\n</html>\n")
 
     # Generate file pages
     for package in packages:
         package_name = normalise_project_name(package)
         version_links = []
-        for version, urls in packages[package].items():
-            for wheel_url in urls:
-                href = f"{wheel_url.url}#sha256={wheel_url.sha256}"
-                version_links.append(f'<a href="{href}">{wheel_url.name}</a>')
+        for version, wheels in packages[package].items():
+            for wheel in wheels:
+                href = f"{wheel.url}#sha256={wheel.sha256}"
+                version_links.append(
+                    f'<a href="{href}" data-requires-python="{wheel.python_requires}">{wheel.name}</a>'
+                )
         package_path = output / f"{package_name}"
         package_path.mkdir(parents=False, exist_ok=True)
         with open(package_path / "index.html", "w") as f:
@@ -118,7 +127,7 @@ def gen_repo_html(packages: Dict[str, Dict[str, List[WheelURl]]], output: Path) 
             f.write("<body>\n\t")
             f.write(f"<h1>{title}</h1>\n\t")
             f.write("<br />\n\t".join(version_links))
-            f.write("\n</body>\n</html>")
+            f.write("\n</body>\n</html>\n")
 
 
 def generate_simple_repository(repo: str, output: Path) -> None:

@@ -21,6 +21,18 @@ To install the package using this repository:
 pip install arm-none-eabi-gcc-toolchain --extra-index-url https://carlosperate.github.io/arm-none-eabi-gcc-py-package
 ```
 
+And all the GNU Arm Embedded Toolchain binaries will be available in the path:
+```
+$ which arm-none-eabi-gcc
+(...)/.venv/bin/arm-none-eabi-gcc
+
+$ arm-none-eabi-gcc --version
+arm-none-eabi-gcc (Arm GNU Toolchain 13.3.Rel1 (Build arm-13.24)) 13.3.1 20240614
+Copyright (C) 2023 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+```
+
 ### TODO
 
 - [ ] Use or fork [wheel-stub](https://github.com/wheel-next/wheel-stub/) to
@@ -113,9 +125,10 @@ Options are:
 
 The `simple_repository_regenerator` folder contains the Python scripts
 used to generate a [PEP 503](https://peps.python.org/pep-0503/) and
-[PEP 629](https://peps.python.org/pep-0629/) compliant
-static python package repository site that points to the wheels stored in
-the GitHub Releases from this repository.
+[PEP 629](https://peps.python.org/pep-0629/) compliant (it does **not**
+implement [PEP 691](https://peps.python.org/pep-0691/) JSON format)
+static HTML python package repository site that points to the wheels
+stored in the GitHub Releases from this repository.
 
 To generate the HTML output, run the following command:
 
