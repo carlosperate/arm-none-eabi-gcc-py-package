@@ -7,6 +7,17 @@ into a Python package that can be easily installed via pip.
 The resulting Python package includes the full toolchain and adds its binaries
 to the Python environment path.
 
+## Table of Contents
+
+- [Current project state](#current-project-state)
+- [Installation](#installation)
+- [Versions and Platforms](#versions-and-platforms)
+- [Why?](#why)
+- [Project/repository structure](#projectrepository-structure)
+- [Building the package](#building-the-package)
+- [Building the Simple Repository](#building-the-simple-repository)
+- [License](#license)
+
 ## Current project state
 
 > [!CAUTION]
@@ -16,7 +27,22 @@ to the Python environment path.
 There is currently a simple repository with the package available at
 https://carlosperate.github.io/arm-none-eabi-gcc-py-package.
 
-To install the package using this repository:
+So, at the moment, to install the package we need to use the
+`--extra-index-url` flag.
+
+Because the wheels size is larger than the default PyPI max size, the next
+step would be to find a way to be able to publish a package to PyPI that's
+able to pull the wheels from an external source.
+
+TODO list:
+
+- [ ] Use or fork [wheel-stub](https://github.com/wheel-next/wheel-stub/) to
+  publish source packages to PyPI that pull these wheels externally hosted
+- [ ] Keep an eye on [PEP 759 – External Wheel Hosting](https://peps.python.org/pep-0759/)
+
+## Installation
+
+In its currents state we need to use an extra index URL to install the package:
 ```
 pip install arm-none-eabi-gcc-toolchain --extra-index-url https://carlosperate.github.io/arm-none-eabi-gcc-py-package
 ```
@@ -31,15 +57,28 @@ arm-none-eabi-gcc (Arm GNU Toolchain 13.3.Rel1 (Build arm-13.24)) 13.3.1 2024061
 Copyright (C) 2023 Free Software Foundation, Inc.
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+$ arm-none-eabi-<tab>
+…one-eabi-addr2line         (command)  …one-eabi-gdb-add-index     (command)
+…one-eabi-ar                (command)  …one-eabi-gdb-add-index-py  (command)
+…one-eabi-as                (command)  …one-eabi-gdb-py            (command)
+…one-eabi-c++               (command)  …one-eabi-gfortran          (command)
+…one-eabi-c++filt           (command)  …one-eabi-gprof             (command)
+…one-eabi-cpp               (command)  …one-eabi-ld                (command)
+…one-eabi-elfedit           (command)  …one-eabi-ld.bfd            (command)
+…one-eabi-g++               (command)  …one-eabi-lto-dump          (command)
+…one-eabi-gcc               (command)  …one-eabi-nm                (command)
+…one-eabi-gcc-13.3.1        (command)  …one-eabi-objcopy           (command)
+…one-eabi-gcc-ar            (command)  …one-eabi-objdump           (command)
+…one-eabi-gcc-nm            (command)  …one-eabi-ranlib            (command)
+…one-eabi-gcc-ranlib        (command)  …one-eabi-readelf           (command)
+…one-eabi-gcov              (command)  …one-eabi-size              (command)
+…one-eabi-gcov-dump         (command)  …one-eabi-strings           (command)
+…one-eabi-gcov-tool         (command)  …one-eabi-strip             (command)
+…one-eabi-gdb               (command)
 ```
 
-### TODO
-
-- [ ] Use or fork [wheel-stub](https://github.com/wheel-next/wheel-stub/) to
-  publish source packages to PyPI that pull these wheels externally hosted
-- [ ] Keep an eye on [PEP 759 – External Wheel Hosting](https://peps.python.org/pep-0759/)
-
-## Versions
+## Versions and Platforms
 
 | GCC Version  | Python Package Version | Win x86_64 | Linux x86_64 | Linux aarch64 |  macOS x86_64 | macOS arm64 |
 |--------------|------------------------|------------|--------------|---------------|---------------|-------------|
@@ -75,6 +114,26 @@ So for example:
 This allows version locking to a specific GCC version and be able to fetch the
 latest `package_builder` (which might include bug fixes in the packaging),
 e.g. `~=13.3`/`==13.3.*`.
+
+## Why?
+
+With tools like CMake and Ninja already available via PyPI, this package
+completes the ecosystem for embedded development, making it possible to manage
+embedded project tooling entirely through Python packaging.
+
+And while Python packaging is far from perfect, it provides some advantages:
+
+- If you project already uses Python you can manage the toolchain alongside
+  other project dependencies
+- Lock a specific toolchain version to the project requirements
+- Easily install or update the toolchain via pip/pipx/uv, without relying on
+  the tool version being available in the OS package manager
+    - It can sometimes be challenging to get an older versions of a tool in
+      a recent OS releases, or a newer versions in older OS releases
+- Leverage Python virtual environments to manage different toolchain versions
+  per project on the same system
+- Simplify cross-platform toolchain installation by using the same package
+  manager across all platforms (also used for CI pipelines)
 
 ## Project/repository structure
 
@@ -139,5 +198,6 @@ python -m simple_repository_generator "carlosperate/arm-none-eabi-gcc-py-package
 ## License
 
 All the source code in this repository is licensed under the MIT license.
+
 The generated wheels contain the GNU Arm Embedded Toolchain,
 which is licensed under the GPL v3 license.
