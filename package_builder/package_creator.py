@@ -36,6 +36,82 @@ PACKAGE_PATH = PROJECT_PATH / "src" / PACKAGE_NAME
 GccInfo = namedtuple("GccInfo", ["files", "release_name", "os_arch"])
 
 
+def get_gcc_releases(
+    release_name: Optional[str], os_type: Optional[str], cpu_arch: Optional[str]
+) -> List[GccInfo]:
+    # Set default values
+    if release_name is None:
+        # Python dictionaries are now ordered, so the latest release is the first one
+        release_name = list(gcc_releases.keys())[0]
+    if release_name not in gcc_releases:
+        raise ValueError(f"Unrecognised GCC release name: {release_name}")
+    if os_type is None:
+        os_type = platform.system()
+    os_type = os_type.lower()
+    if cpu_arch is None:
+        cpu_arch = platform.machine()
+    cpu_arch = cpu_arch.lower()
+
+    # We have a special case for os_type and cpu_arch being set to "all"
+    # but error if only one of them is set to "all"
+    if (os_type == "all" and cpu_arch != "all") or (
+        os_type != "all" and cpu_arch == "all"
+    ):
+        raise ValueError(
+            "Both OS type and CPU architecture must be 'all', not just one"
+        )
+    if os_type == "all" and cpu_arch == "all":
+        gcc_release_all = []
+        for release_type in gcc_releases[release_name].keys():
+            gcc_release_all.append(
+                GccInfo(
+                    files=gcc_releases[release_name][release_type],
+                    release_name=release_name,
+                    os_arch=release_type,
+                )
+            )
+        return gcc_release_all
+
+    # Determine CPU architecture
+    if cpu_arch in ["x86_64", "amd64", "i386", "i686"]:
+        cpu_arch = "x86_64"
+    elif cpu_arch in ["arm64", "aarch64", "armv8a", "armv8b", "armv8l"]:
+        cpu_arch = "arm"
+    else:
+        raise ValueError(f"Unrecognised CPU architecture: {cpu_arch}")
+
+    if os_type in ["darwin", "macos", "macosx", "osx", "mac"]:
+        if cpu_arch == "x86_64":
+            release_type = "mac_x86_64"
+        elif cpu_arch == "arm":
+            release_type = "mac_arm64"
+            # Not all releases have a macOS ARM version
+            if release_type not in gcc_releases[release_name]:
+                raise ValueError(
+                    f"Release {release_name} does not have a macOS arm64 version"
+                )
+    elif os_type in ["windows", "win", "win32"]:
+        if cpu_arch == "x86_64":
+            release_type = "win32"
+        elif cpu_arch == "arm":
+            raise ValueError("Windows ARM architecture not supported")
+    elif os_type in ["linux", "linux2"]:
+        if cpu_arch == "x86_64":
+            release_type = "linux_x86_64"
+        elif cpu_arch == "arm":
+            release_type = "linux_aarch64"
+    else:
+        raise ValueError(f"Unrecognised OS: {os_type}")
+
+    return [
+        GccInfo(
+            files=gcc_releases[release_name][release_type],
+            release_name=release_name,
+            os_arch=release_type,
+        )
+    ]
+
+
 def download_toolchain(file_url: str, save_path: Path = Path.cwd()) -> Path:
     """
     Download the toolchain from the given URL into the given path.
@@ -226,82 +302,6 @@ def create_package_files(
         file.write(file_templates.manifest_in.format(gcc_folder=gcc_folder))
 
 
-def get_gcc_releases(
-    release_name: Optional[str], os_type: Optional[str], cpu_arch: Optional[str]
-) -> List[GccInfo]:
-    # Set default values
-    if release_name is None:
-        # Python dictionaries are now ordered, so the latest release is the first one
-        release_name = list(gcc_releases.keys())[0]
-    if release_name not in gcc_releases:
-        raise ValueError(f"Unrecognised GCC release name: {release_name}")
-    if os_type is None:
-        os_type = platform.system()
-    os_type = os_type.lower()
-    if cpu_arch is None:
-        cpu_arch = platform.machine()
-    cpu_arch = cpu_arch.lower()
-
-    # We have a special case for os_type and cpu_arch being set to "all"
-    # but error if only one of them is set to "all"
-    if (os_type == "all" and cpu_arch != "all") or (
-        os_type != "all" and cpu_arch == "all"
-    ):
-        raise ValueError(
-            "Both OS type and CPU architecture must be 'all', not just one"
-        )
-    if os_type == "all" and cpu_arch == "all":
-        gcc_release_all = []
-        for release_type in gcc_releases[release_name].keys():
-            gcc_release_all.append(
-                GccInfo(
-                    files=gcc_releases[release_name][release_type],
-                    release_name=release_name,
-                    os_arch=release_type,
-                )
-            )
-        return gcc_release_all
-
-    # Determine CPU architecture
-    if cpu_arch in ["x86_64", "amd64", "i386", "i686"]:
-        cpu_arch = "x86_64"
-    elif cpu_arch in ["arm64", "aarch64", "armv8a", "armv8b", "armv8l"]:
-        cpu_arch = "arm"
-    else:
-        raise ValueError(f"Unrecognised CPU architecture: {cpu_arch}")
-
-    if os_type in ["darwin", "macos", "macosx", "osx", "mac"]:
-        if cpu_arch == "x86_64":
-            release_type = "mac_x86_64"
-        elif cpu_arch == "arm":
-            release_type = "mac_arm64"
-            # Not all releases have a macOS ARM version
-            if release_type not in gcc_releases[release_name]:
-                raise ValueError(
-                    f"Release {release_name} does not have a macOS arm64 version"
-                )
-    elif os_type in ["windows", "win", "win32"]:
-        if cpu_arch == "x86_64":
-            release_type = "win32"
-        elif cpu_arch == "arm":
-            raise ValueError("Windows ARM architecture not supported")
-    elif os_type in ["linux", "linux2"]:
-        if cpu_arch == "x86_64":
-            release_type = "linux_x86_64"
-        elif cpu_arch == "arm":
-            release_type = "linux_aarch64"
-    else:
-        raise ValueError(f"Unrecognised OS: {os_type}")
-
-    return [
-        GccInfo(
-            files=gcc_releases[release_name][release_type],
-            release_name=release_name,
-            os_arch=release_type,
-        )
-    ]
-
-
 def build_python_wheel(package_path: Path, wheel_dir: Path, wheel_plat: str) -> None:
     """
     Create a Python wheel from the package directory.
@@ -356,7 +356,7 @@ def build_python_wheel(package_path: Path, wheel_dir: Path, wheel_plat: str) -> 
     wheel_path.unlink()
 
 
-def build_package_local_machine() -> None:
+def build_package_for_local_machine() -> None:
     print(f"Project directory: {PROJECT_PATH.relative_to(Path.cwd())}")
     if not PROJECT_PATH.is_dir() or not PACKAGE_PATH.is_dir():
         raise FileNotFoundError(
@@ -380,5 +380,5 @@ def build_package_local_machine() -> None:
 
 
 if __name__ == "__main__":
-    build_package_local_machine()
+    build_package_for_local_machine()
     sys.exit(0)
