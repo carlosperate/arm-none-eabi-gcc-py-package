@@ -134,9 +134,10 @@ def build(
         print("\n[green]Building Python wheel[/green]")
         dist_folder = PROJECT_ROOT / "dist"
         dist_folder.mkdir(exist_ok=True)
-        pc.build_python_wheel(
+        wheel_path = pc.build_python_wheel(
             PROJECT_PATH, dist_folder, gcc_release.files["wheel_plat"]
         )
+        pc.create_sha256_hash(wheel_path)
 
         print(f"\n[green]Package {release_name}) created![/green]\n")
 

@@ -3,6 +3,7 @@
 import os
 import re
 import sys
+import hashlib
 import tarfile
 import zipfile
 import platform
@@ -307,6 +308,7 @@ def build_python_wheel(package_path: Path, wheel_dir: Path, wheel_plat: str) -> 
     Create a Python wheel from the package directory.
 
     :param package_path: Path to the package directory.
+    :return: Path to the created wheel file.
     """
     print(f"\nCreating Python wheel from: {package_path.relative_to(Path.cwd())}")
     if not package_path.is_dir():
@@ -340,6 +342,14 @@ def build_python_wheel(package_path: Path, wheel_dir: Path, wheel_plat: str) -> 
     if not wheel_path.is_file():
         raise FileNotFoundError(f"Wheel file not created: {wheel_path}")
 
+    new_wheel_path = (
+        wheel_dir / f"{project_name}-{project_version}-py3-none-{wheel_plat}.whl"
+    )
+    if new_wheel_path.is_file():
+        raise FileExistsError(
+            f"Wheel file with the platform tag already exists: {new_wheel_path}"
+        )
+
     subprocess.run(
         [
             sys.executable,
@@ -354,6 +364,30 @@ def build_python_wheel(package_path: Path, wheel_dir: Path, wheel_plat: str) -> 
         cwd=wheel_dir,
     )
     wheel_path.unlink()
+
+    if not new_wheel_path.is_file():
+        raise FileNotFoundError(
+            f"Wheel file with the platform tag not created: {new_wheel_path}"
+        )
+
+    return new_wheel_path
+
+
+def create_sha256_hash(file_path: Path) -> str:
+    """
+    Create a SHA256 hash file for the given file in the same directory.
+
+    :param file_path: Path to the file to hash.
+    :return: SHA256 hash file path.
+    """
+    sha256_hash = hashlib.sha256()
+    with open(file_path, "rb") as file:
+        for chunk in iter(lambda: file.read(4096), b""):
+            sha256_hash.update(chunk)
+    sha256_file_path = file_path.with_suffix(".sha256")
+    with open(sha256_file_path, "w") as file:
+        file.write(f"{sha256_hash.hexdigest()} {file_path.name}\n")
+    return sha256_file_path
 
 
 def build_package_for_local_machine() -> None:
@@ -374,9 +408,10 @@ def build_package_for_local_machine() -> None:
             gcc_path,
             generate_package_version(gcc_release.release_name),
         )
-        build_python_wheel(
+        wheel_path = build_python_wheel(
             PROJECT_PATH, PROJECT_PATH / "dist", gcc_release.files["wheel_plat"]
         )
+        create_sha256_hash(wheel_path)
 
 
 if __name__ == "__main__":
