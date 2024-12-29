@@ -123,17 +123,19 @@ embedded project tooling entirely through Python packaging.
 
 And while Python packaging is far from perfect, it provides some advantages:
 
-- If you project already uses Python you can manage the toolchain alongside
+- If your project already uses Python you can manage the toolchain alongside
   other project dependencies
-- Lock a specific toolchain version to the project requirements
+- You can lock a specific toolchain version to the project requirements
 - Easily install or update the toolchain via pip/pipx/uv, without relying on
   the tool version being available in the OS package manager
     - It can sometimes be challenging to get an older versions of a tool in
-      a recent OS releases, or a newer versions in older OS releases
+      a recent OS release, or a newer versions in older OS releases
 - Leverage Python virtual environments to manage different toolchain versions
   per project on the same system
 - Simplify cross-platform toolchain installation by using the same package
-  manager across all platforms (also used for CI pipelines)
+  manager across all platforms
+    - This is also useful for CI pipelines, including matrix jobs testing
+      multiple versions of different tools with the same project
 
 ## Project/repository structure
 
@@ -146,13 +148,15 @@ this package creation and distribution:
 - `package_builder`: Contains the Python scripts used to generate the 
   complete `arm-none-eabi-gcc-toolchain` packages (which are later
   uploaded to GH releases via CI).
-- `.github/workflows/release.yml`: Contains the GitHub Actions workflow used
-  to build and upload the wheels into to GitHub Releases in this repository.
-- `simple_repository_regenerator`: Contains the Python scripts used to
-  generate the static simple repository that points to the wheels stored
-  in the GH Releases.
-- `.github/workflows/publish_repository.yml`: Contains the GitHub Actions
-  workflow used to publish the generated simple repository to GitHub Pages.
+- `simple_repository_generator`: Contains the Python scripts used to generate
+  the static HTML pages for a [PEP 503](https://peps.python.org/pep-0503/)
+  Python simple package repository, which links to the wheels
+  stored in the GH Releases. This repository is published to GH Pages via CI.
+- `arm-none-eabi-gcc-toolchain-pypi`: Contains the files to create a secondary
+   package, which uses [wheel-stub](https://github.com/wheel-next/wheel-stub)
+   to create a source distribution package to be published to PyPI.
+   When this package is installed wheel-stub downloads and installs the
+   platform-specific wheels from this project Simple Repository.
 
 ## Building the package
 
@@ -179,6 +183,21 @@ Options are:
 - `--release`: The GCC release name as shown in the [versions section](#versions)
 - `--os`: `linux`, `mac`, or `win`
 - `--arch`: `x86_64` or `aarch64`/`arm64`
+
+## Building the PyPI Source Distribution
+
+The `arm-none-eabi-gcc-toolchain-pypi` folder contains the `pyproject.toml`
+needed to create a secondary package, which uses
+[wheel-stub](https://github.com/wheel-next/wheel-stub) to create a source
+distribution package to be published to PyPI.
+
+To build the source distribution package, build a `arm-none-eabi-gcc-toolchain`
+wheel and run the following command:
+
+```bash
+cd arm-none-eabi-gcc-toolchain-pypi
+python -m build --sdist --config-setting source_wheel=../dist/wheel_file.whl
+```
 
 ## Building the Simple Repository
 

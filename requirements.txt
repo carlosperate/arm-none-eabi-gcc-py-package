@@ -1,8 +1,9 @@
+wheel~=0.45
+build~=1.2
 rich~=13.8
 black~=23.3
 mypy~=1.4
 typer~=0.13
-wheel~=0.45
 tomli~=2.0
 PyGithub~=2.3
 requests~=2.31
