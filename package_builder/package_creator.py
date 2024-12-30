@@ -10,7 +10,7 @@ import platform
 import subprocess
 import urllib.request
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Tuple
 from collections import namedtuple
 
 
@@ -38,30 +38,26 @@ GccInfo = namedtuple("GccInfo", ["files", "release_name", "os_arch"])
 
 
 def get_gcc_releases(
-    release_name: Optional[str], os_type: Optional[str], cpu_arch: Optional[str]
+    release_name: str, os_arch: Optional[Tuple[str, str]]
 ) -> List[GccInfo]:
+    """
+    Get the GCC release information based on the release name, OS type and
+    CPU architecture.
+
+    :param release_name: GCC release name.
+    :param os_arch: Tuple with the Operating System and architecture info.
+        If set to None, it will return all the available builds for the release.
+    :return: List of GCC releases.
+    """
     # Set default values
-    if release_name is None:
+    if release_name is "latest":
         # Python dictionaries are now ordered, so the latest release is the first one
         release_name = list(gcc_releases.keys())[0]
     if release_name not in gcc_releases:
         raise ValueError(f"Unrecognised GCC release name: {release_name}")
-    if os_type is None:
-        os_type = platform.system()
-    os_type = os_type.lower()
-    if cpu_arch is None:
-        cpu_arch = platform.machine()
-    cpu_arch = cpu_arch.lower()
 
-    # We have a special case for os_type and cpu_arch being set to "all"
-    # but error if only one of them is set to "all"
-    if (os_type == "all" and cpu_arch != "all") or (
-        os_type != "all" and cpu_arch == "all"
-    ):
-        raise ValueError(
-            "Both OS type and CPU architecture must be 'all', not just one"
-        )
-    if os_type == "all" and cpu_arch == "all":
+    # If os_arch is not set, get all the available builds for the release
+    if os_arch is None:
         gcc_release_all = []
         for release_type in gcc_releases[release_name].keys():
             gcc_release_all.append(
@@ -72,6 +68,15 @@ def get_gcc_releases(
                 )
             )
         return gcc_release_all
+
+    os_type = os_arch[0]
+    cpu_arch = os_arch[1]
+    if os_type is None:
+        os_type = platform.system()
+    os_type = os_type.lower()
+    if cpu_arch is None:
+        cpu_arch = platform.machine()
+    cpu_arch = cpu_arch.lower()
 
     # Determine CPU architecture
     if cpu_arch in ["x86_64", "amd64", "i386", "i686"]:
@@ -412,7 +417,9 @@ def get_package_metadata(package_path: Path) -> str:
         raise FileNotFoundError(f"Package metadata folder not found in: {package_path}")
     pkg_info_file = egg_info_folder / "PKG-INFO"
     if not pkg_info_file.is_file():
-        raise FileNotFoundError(f"Package metadata file not found in: {egg_info_folder}")
+        raise FileNotFoundError(
+            f"Package metadata file not found in: {egg_info_folder}"
+        )
     return pkg_info_file.read_text()
 
 

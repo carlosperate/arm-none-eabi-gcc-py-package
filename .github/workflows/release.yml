@@ -32,7 +32,7 @@ jobs:
       - run: pip install -r requirements.txt
 
       - name: Build all platform packages for this release
-        run: python -m package_builder build --release ${{ matrix.gcc }} --os all --arch all
+        run: python -m package_builder build ${{ matrix.gcc }}
 
       - name: Get the package version
         if: github.event_name == 'workflow_dispatch'

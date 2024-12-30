@@ -129,7 +129,7 @@ And while Python packaging is far from perfect, it provides some advantages:
 - Easily install or update the toolchain via pip/pipx/uv, without relying on
   the tool version being available in the OS package manager
     - It can sometimes be challenging to get an older versions of a tool in
-      a recent OS release, or a newer versions in older OS releases
+      a recent OS release, or a newer version in old OS release
 - Leverage Python virtual environments to manage different toolchain versions
   per project on the same system
 - Simplify cross-platform toolchain installation by using the same package
@@ -176,11 +176,14 @@ pip install -r requirements.txt
 Run the builder:
 
 ```bash
-python -m package_builder build --release <name_of_release> --os <operating system> --arch <cpu architecture>
+python -m package_builder build <name_of_release> --os <operating system> --arch <cpu architecture>
 ```
 
-Options are:
-- `--release`: The GCC release name as shown in the [versions section](#versions)
+The first argument (shown as `<name_of_release>`) is the GCC release name as
+shown in the [versions section](#versions-and-platforms).
+
+If these optional flags are used (both or neither must be specified), it will
+build a specific platform version of the package:
 - `--os`: `linux`, `mac`, or `win`
 - `--arch`: `x86_64` or `aarch64`/`arm64`
 

@@ -7,7 +7,7 @@ from typing import Optional
 
 import typer
 from typing_extensions import Annotated
-from rich import print
+from rich import print, console, panel
 
 try:
     from package_builder import package_creator as pc
@@ -28,7 +28,13 @@ from package_builder.package_creator import (
 
 
 app = typer.Typer()
+err_console = console.Console(stderr=True)
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+def error_exit(message: str, exit_code: int = 1):
+    err_console.print(panel.Panel.fit(f"[red]{message}[/red]", title="ERROR"))
+    raise typer.Exit(code=exit_code)
 
 
 @app.command()
@@ -96,24 +102,37 @@ def clean():
 
 @app.command()
 def build(
-    release: Annotated[Optional[str], typer.Option(help="GCC release name")] = None,
-    os: Annotated[Optional[str], typer.Option(help="Operating System name")] = None,
-    arch: Annotated[Optional[str], typer.Option(help="CPU architecture")] = None,
+    release: Annotated[str, typer.Argument(help="GCC release name (can be 'latest')")],
+    os: Annotated[
+        Optional[str], typer.Option(help="Specify Operating System (mac/win/linux)")
+    ] = None,
+    arch: Annotated[
+        Optional[str],
+        typer.Option(help="Specify CPU architecture (x86_64, arm64, aarch64)"),
+    ] = None,
 ):
     """
     Builds the Python package with the selected GCC release.
 
-    If os and arch are set to "all", it will built packages for all the release platforms.
+    If os and arch are not set it will build all versions of the release.
+    Otherwise, it will build the specified os and arch (both must be set).
     """
     print("\n[green]Start building Python package/s[/green]")
 
     print(f"Package directory: {PROJECT_PATH.relative_to(Path.cwd())}\n")
     if not PROJECT_PATH.is_dir() or not PACKAGE_PATH.is_dir():
-        raise FileNotFoundError(
+        error_exit(
             f"Project/Package directory not found:\n\t{PROJECT_PATH}\n\t{PACKAGE_PATH}"
         )
 
-    selected_gcc_releases = pc.get_gcc_releases(release, os, arch)
+    if not (os and arch) and (os or arch):
+        error_exit("Both --os and --arch must be set if one of them is set.")
+
+    os_arch = (os, arch)
+    if not os and not arch:
+        os_arch = None
+
+    selected_gcc_releases = pc.get_gcc_releases(release, os_arch)
     for gcc_release in selected_gcc_releases:
         # Perform a clean build for each release
         clean()
