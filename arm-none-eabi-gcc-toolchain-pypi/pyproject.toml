@@ -8,3 +8,6 @@ build-backend = "wheel_stub.buildapi"
 
 [tool.wheel_stub]
 index_url = "https://carlosperate.github.io/arm-none-eabi-gcc-py-package/"
+
+[project]
+requires-python = ">=3.8"

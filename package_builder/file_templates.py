@@ -37,18 +37,24 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "arm-none-eabi-gcc-toolchain"
 version = "{version}"
-description = "Arm GNU Toolchain (arm-none-eabi-gcc)"
+description = "The Arm GNU Toolchain (arm-none-eabi-gcc) to cross-compile for ARM Cortex-M microcontrollers."
 authors = [
     {{ name = "Carlos Pereira Atencio", email = "carlosperate@embeddedlog.com" }}
 ]
 readme = "README.md"
 license = {{ text = "MIT License" }}
+keywords = ["gcc", "arm-none-eabi-gcc", "build", "c", "c++", "cross-compilation"]
 classifiers = [
-  "Development Status :: 4 - Beta",
-  "Intended Audience :: Developers",
-  "Topic :: Software Development :: Build Tools",
-  "Topic :: Software Development :: Compilers",
-  "Programming Language :: Python :: 3",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Compilers",
+    "Programming Language :: C",
+    "Programming Language :: C++",
+    "Programming Language :: Fortran",
+    "Programming Language :: Python :: 3",
 ]
 
 [project.urls]
