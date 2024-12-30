@@ -38,15 +38,41 @@ def get_gh_releases_wheel_urls(
     wheel_files = {}
     for release in repo.get_releases():
         wheel_files[release.tag_name] = []
-        for asset in release.get_assets():
-            if asset.name.endswith(".whl"):
-                wheel_files[release.tag_name].append(
-                    WheelData(
-                        name=asset.name,
-                        url=asset.browser_download_url,
-                        sha256=calculate_sha256(asset.browser_download_url),
-                    )
+        release_assets = list(release.get_assets())
+        for asset_wheel in release_assets:
+            if not asset_wheel.name.endswith(".whl"):
+                continue
+            print(f"\n\tFound wheel: {asset_wheel.name}")
+            # Use the sha256 file in the assets, or calculate it if not present
+            # We don't expect more than 10-20 assets, so fine to iterate again
+            sha256_hash = None
+            for asset_sha in release_assets:
+                if asset_sha.name != f"{asset_wheel.name}.sha256":
+                    continue
+                # This file will be in the format "<sha256 hash> filename.whl\n"
+                with requests.get(asset_sha.browser_download_url) as r:
+                    sha256_file_contents = r.text.strip()
+                if asset_wheel.name in sha256_file_contents:
+                    sha256_hash = sha256_file_contents.split()[0]
+                    if len(sha256_hash) != 64:
+                        sha256_hash = None
+                        print(f"\tInvalid SHA-256 in {asset_sha.browser_download_url}:")
+                        print(sha256_file_contents)
+                    else:
+                        print(f"\tFound SHA-256 ({sha256_hash}) in\n\t{asset_sha.name}")
+                break
+            else:
+                print(f"\tCouldn't find matching SHA-256 file for {asset_wheel.name}")
+            if sha256_hash is None:
+                sha256_hash = calculate_sha256(asset_wheel.browser_download_url)
+
+            wheel_files[release.tag_name].append(
+                WheelData(
+                    name=asset_wheel.name,
+                    url=asset_wheel.browser_download_url,
+                    sha256=sha256_hash,
                 )
+            )
     return wheel_files
 
 

@@ -384,7 +384,7 @@ def create_sha256_hash(file_path: Path) -> str:
     with open(file_path, "rb") as file:
         for chunk in iter(lambda: file.read(4096), b""):
             sha256_hash.update(chunk)
-    sha256_file_path = file_path.with_suffix(".sha256")
+    sha256_file_path = file_path.with_suffix(f"{file_path.suffix}.sha256")
     with open(sha256_file_path, "w") as file:
         file.write(f"{sha256_hash.hexdigest()} {file_path.name}\n")
     return sha256_file_path
