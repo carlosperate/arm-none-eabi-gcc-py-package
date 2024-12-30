@@ -51,7 +51,7 @@ jobs:
           commit: ${{ github.sha }}
           skipIfReleaseExists: true
           replacesArtifacts: false
-          artifacts: "dist/*.whl, dist/*.whl.sha256"
+          artifacts: "dist/*.whl, dist/*.whl.metadata, dist/*.sha256"
 
 
   test-releases:

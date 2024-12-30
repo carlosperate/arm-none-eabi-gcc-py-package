@@ -390,6 +390,32 @@ def create_sha256_hash(file_path: Path) -> str:
     return sha256_file_path
 
 
+def get_package_metadata(package_path: Path) -> str:
+    """
+    Gets the package metadata created during the wheel creation.
+
+    It will be in the same directory where the package folder is, as the
+    <package>.egg-info folder.
+
+    :param package_path: Path to the package directory.
+    :return: The contents of the <package>.egg-info/PKG-INFO file.
+    """
+    package_path = package_path.resolve()
+    if not package_path.is_dir():
+        raise FileNotFoundError(f"Package directory not found: {package_path}")
+    egg_info_folder = None
+    for item in package_path.parent.iterdir():
+        if item.is_dir() and item.name.endswith(".egg-info"):
+            egg_info_folder = item
+            break
+    if egg_info_folder is None:
+        raise FileNotFoundError(f"Package metadata folder not found in: {package_path}")
+    pkg_info_file = egg_info_folder / "PKG-INFO"
+    if not pkg_info_file.is_file():
+        raise FileNotFoundError(f"Package metadata file not found in: {egg_info_folder}")
+    return pkg_info_file.read_text()
+
+
 def build_package_for_local_machine() -> None:
     print(f"Project directory: {PROJECT_PATH.relative_to(Path.cwd())}")
     if not PROJECT_PATH.is_dir() or not PACKAGE_PATH.is_dir():
@@ -411,6 +437,10 @@ def build_package_for_local_machine() -> None:
         wheel_path = build_python_wheel(
             PROJECT_PATH, PROJECT_PATH / "dist", gcc_release.files["wheel_plat"]
         )
+        metadata = get_package_metadata(PACKAGE_PATH)
+        metadata_file = wheel_path.with_suffix(f"{wheel_path.suffix}.metadata")
+        metadata_file.write_text(metadata)
+        create_sha256_hash(metadata_file)
         create_sha256_hash(wheel_path)
 
 

@@ -137,6 +137,11 @@ def build(
         wheel_path = pc.build_python_wheel(
             PROJECT_PATH, dist_folder, gcc_release.files["wheel_plat"]
         )
+
+        print("\n[green]Producing metadata files[/green]")
+        metadata_file = wheel_path.with_suffix(f"{wheel_path.suffix}.metadata")
+        metadata_file.write_text(pc.get_package_metadata(PACKAGE_PATH))
+        pc.create_sha256_hash(metadata_file)
         pc.create_sha256_hash(wheel_path)
 
         print(f"\n[green]Package {release_name}) created![/green]\n")
