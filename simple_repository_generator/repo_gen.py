@@ -22,6 +22,8 @@ class WheelData:
     name: str
     url: str
     sha256: str
+    metadata_url: str = ""
+    metadata_sha256: str = ""
     python_requires: str = "&gt;=3.6"  # Default to Python 3.6+
 
 
@@ -42,37 +44,75 @@ def get_gh_releases_wheel_urls(
         for asset_wheel in release_assets:
             if not asset_wheel.name.endswith(".whl"):
                 continue
+
             print(f"\n\tFound wheel: {asset_wheel.name}")
-            # Use the sha256 file in the assets, or calculate it if not present
+            # Look for the respective metadata file and both sha256 files
             # We don't expect more than 10-20 assets, so fine to iterate again
-            sha256_hash = None
-            for asset_sha in release_assets:
-                if asset_sha.name != f"{asset_wheel.name}.sha256":
-                    continue
-                # This file will be in the format "<sha256 hash> filename.whl\n"
-                with requests.get(asset_sha.browser_download_url) as r:
-                    sha256_file_contents = r.text.strip()
-                if asset_wheel.name in sha256_file_contents:
-                    sha256_hash = sha256_file_contents.split()[0]
-                    if len(sha256_hash) != 64:
-                        sha256_hash = None
-                        print(f"\tInvalid SHA-256 in {asset_sha.browser_download_url}:")
-                        print(sha256_file_contents)
-                    else:
-                        print(f"\tFound SHA-256 ({sha256_hash}) in\n\t{asset_sha.name}")
-                break
-            else:
-                print(f"\tCouldn't find matching SHA-256 file for {asset_wheel.name}")
-            if sha256_hash is None:
-                sha256_hash = calculate_sha256(asset_wheel.browser_download_url)
+            wheel_sha256 = None
+            metadata_url = ""
+            metadata_sha256 = ""
+            for asset in release_assets:
+                if asset.name == f"{asset_wheel.name}.sha256":
+                    # This file will be in the format "<sha256 hash> filename.whl\n"
+                    with requests.get(asset.browser_download_url) as r:
+                        sha256_file_contents = r.text.strip()
+                    if asset_wheel.name in sha256_file_contents:
+                        wheel_sha256 = sha256_file_contents.split()[0]
+                        if len(wheel_sha256) != 64:
+                            raise ValueError(
+                                f"Invalid SHA-256 in {asset.browser_download_url}: \n"
+                                f"{sha256_file_contents}\n"
+                                f"{wheel_sha256}"
+                            )
+                        print(f"\tFound SHA-256 ({wheel_sha256}) in\n\t\t{asset.name}")
+                elif asset.name == f"{asset_wheel.name}.metadata":
+                    # Ensure the URL is the same as the wheel URL + ".metadata" extension
+                    if (
+                        asset.browser_download_url
+                        != asset_wheel.browser_download_url + ".metadata"
+                    ):
+                        raise ValueError(
+                            f"Metadata file URL doesn't match the wheel URL:\n"
+                            f"\tWheel:    {asset_wheel.browser_download_url}\n"
+                            f"\tMetadata: {asset.browser_download_url}"
+                        )
+                    metadata_url = asset.browser_download_url
+                    print(f"\tFound metadata: {asset.name}")
+                elif asset.name == f"{asset_wheel.name}.metadata.sha256":
+                    with requests.get(asset.browser_download_url) as r:
+                        metadata_sha256_file = r.text.strip()
+                    metadata_sha256 = metadata_sha256_file.split()[0]
+                    if len(metadata_sha256) != 64:
+                        raise ValueError(
+                            f"Invalid SHA-256 in {asset.browser_download_url}:\n"
+                            f"{metadata_sha256_file}\n"
+                            f"{metadata_sha256}"
+                        )
+                    print(
+                        f"\tFound metadata SHA-256 ({metadata_sha256}) in\n\t\t{asset.name}"
+                    )
+
+            if not metadata_url and metadata_sha256:
+                raise ValueError(
+                    f"Metadata SHA-256 found without a metadata file for {asset_wheel.name}"
+                )
+            if metadata_url and not metadata_sha256:
+                print(f"\tMetadata file found without a SHA-256 for {asset_wheel.name}")
+                metadata_sha256 = calculate_sha256(metadata_url)
+            if wheel_sha256 is None:
+                print(f"\tCouldn't find matching SHA-256 for {asset_wheel.name}")
+                wheel_sha256 = calculate_sha256(asset_wheel.browser_download_url)
 
             wheel_files[release.tag_name].append(
                 WheelData(
                     name=asset_wheel.name,
                     url=asset_wheel.browser_download_url,
-                    sha256=sha256_hash,
+                    sha256=wheel_sha256,
+                    metadata_url=metadata_url,
+                    metadata_sha256=metadata_sha256,
                 )
             )
+
     return wheel_files
 
 
@@ -139,7 +179,10 @@ def gen_repo_html(packages: Dict[str, Dict[str, List[WheelData]]], output: Path)
             for wheel in wheels:
                 href = f"{wheel.url}#sha256={wheel.sha256}"
                 version_links.append(
-                    f'<a href="{href}" data-requires-python="{wheel.python_requires}">{wheel.name}</a>'
+                    f'<a href="{href}" data-requires-python="{wheel.python_requires}" '
+                    f'data-dist-info-metadata="sha256={wheel.metadata_sha256}" '
+                    f'data-core-metadata="sha256={wheel.metadata_sha256}">'
+                    f"{wheel.name}</a>"
                 )
         package_path = output / f"{package_name}"
         package_path.mkdir(parents=False, exist_ok=True)

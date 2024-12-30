@@ -202,8 +202,10 @@ python -m build --sdist --config-setting source_wheel=../dist/wheel_file.whl
 ## Building the Simple Repository
 
 The `simple_repository_regenerator` folder contains the Python scripts
-used to generate a [PEP 503](https://peps.python.org/pep-0503/) and
-[PEP 629](https://peps.python.org/pep-0629/) compliant (it does **not**
+used to generate a [PEP 503](https://peps.python.org/pep-0503/),
+[PEP 629](https://peps.python.org/pep-0629/),
+[PEP 658](https://peps.python.org/pep-0658/), and
+[PEP 714](https://peps.python.org/pep-0714/) compliant (it does **not**
 implement [PEP 691](https://peps.python.org/pep-0691/) JSON format)
 static HTML python package repository site that points to the wheels
 stored in the GitHub Releases from this repository.
