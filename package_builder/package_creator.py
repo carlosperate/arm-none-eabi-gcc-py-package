@@ -308,7 +308,7 @@ def create_package_files(
         file.write(file_templates.manifest_in.format(gcc_folder=gcc_folder))
 
 
-def build_python_wheel(package_path: Path, wheel_dir: Path, wheel_plat: str) -> None:
+def build_wheel(package_path: Path, dist_path: Path, wheel_plat: str) -> None:
     """
     Create a Python wheel from the package directory.
 
@@ -324,7 +324,7 @@ def build_python_wheel(package_path: Path, wheel_dir: Path, wheel_plat: str) -> 
         pyproject_toml = tomli.load(file)
     project_name = pyproject_toml["project"]["name"].replace("-", "_")
     project_version = pyproject_toml["project"]["version"]
-    wheel_path = wheel_dir / f"{project_name}-{project_version}-py3-none-any.whl"
+    wheel_path = dist_path / f"{project_name}-{project_version}-py3-none-any.whl"
     if wheel_path.is_file():
         raise FileExistsError(
             f"Wheel file about to be created already exists: {wheel_path}"
@@ -337,7 +337,7 @@ def build_python_wheel(package_path: Path, wheel_dir: Path, wheel_plat: str) -> 
             "pip",
             "wheel",
             "--wheel-dir",
-            wheel_dir,
+            str(dist_path),
             ".",
         ],
         check=True,
@@ -348,7 +348,7 @@ def build_python_wheel(package_path: Path, wheel_dir: Path, wheel_plat: str) -> 
         raise FileNotFoundError(f"Wheel file not created: {wheel_path}")
 
     new_wheel_path = (
-        wheel_dir / f"{project_name}-{project_version}-py3-none-{wheel_plat}.whl"
+        dist_path / f"{project_name}-{project_version}-py3-none-{wheel_plat}.whl"
     )
     if new_wheel_path.is_file():
         raise FileExistsError(
@@ -366,7 +366,7 @@ def build_python_wheel(package_path: Path, wheel_dir: Path, wheel_plat: str) -> 
             wheel_path.name,
         ],
         check=True,
-        cwd=wheel_dir,
+        cwd=dist_path,
     )
     wheel_path.unlink()
 
@@ -423,6 +423,57 @@ def get_package_metadata(package_path: Path) -> str:
     return pkg_info_file.read_text()
 
 
+def build_pypi_source_dist(
+    pypi_package_path: Path, dist_path: Path, wheel_path: Path
+) -> Path:
+    """
+    Create a source distribution for the PyPI package.
+
+    :param pypi_package_path: Path to the source distribution package dir.
+    :param wheel_path: Path to a wheel file (platform doesn't matter).
+    :return: Path to the created source distribution file.
+    """
+    print(
+        f"\nCreating PyPI source distribution from: {pypi_package_path.relative_to(Path.cwd())}"
+    )
+    if not pypi_package_path.is_dir():
+        raise FileNotFoundError(
+            f"PyPI package directory not found: {pypi_package_path}"
+        )
+    if not wheel_path.is_file():
+        raise FileNotFoundError(f"Wheel file not found: {wheel_path}")
+    wheel_path = wheel_path.resolve()
+
+    # Generate the expected source distribution file name from wheel filename
+    wheel_name = wheel_path.name
+    source_dist_name = wheel_name.split("-py3-none-")[0] + ".tar.gz"
+    source_dist_path = dist_path / source_dist_name
+    if source_dist_path.is_file():
+        raise FileExistsError(
+            f"Source distribution file about to be created already exists: {source_dist_path}"
+        )
+
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "build",
+            "--sdist",
+            "--outdir",
+            str(dist_path),
+            "--config-setting",
+            f'source_wheel={wheel_path}',
+        ],
+        check=True,
+        cwd=pypi_package_path,
+    )
+
+    if not source_dist_path.is_file():
+        raise FileNotFoundError(f"Source distribution file not created: {source_dist_path}")
+
+    return source_dist_path
+
+
 def build_package_for_local_machine() -> None:
     print(f"Project directory: {PROJECT_PATH.relative_to(Path.cwd())}")
     if not PROJECT_PATH.is_dir() or not PACKAGE_PATH.is_dir():
@@ -441,7 +492,7 @@ def build_package_for_local_machine() -> None:
             gcc_path,
             generate_package_version(gcc_release.release_name),
         )
-        wheel_path = build_python_wheel(
+        wheel_path = build_wheel(
             PROJECT_PATH, PROJECT_PATH / "dist", gcc_release.files["wheel_plat"]
         )
         metadata = get_package_metadata(PACKAGE_PATH)

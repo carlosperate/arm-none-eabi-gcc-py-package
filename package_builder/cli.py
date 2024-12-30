@@ -26,7 +26,6 @@ from package_builder.package_creator import (
     PACKAGE_PATH,
 )
 
-
 app = typer.Typer()
 err_console = console.Console(stderr=True)
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -153,7 +152,7 @@ def build(
         print("\n[green]Building Python wheel[/green]")
         dist_folder = PROJECT_ROOT / "dist"
         dist_folder.mkdir(exist_ok=True)
-        wheel_path = pc.build_python_wheel(
+        wheel_path = pc.build_wheel(
             PROJECT_PATH, dist_folder, gcc_release.files["wheel_plat"]
         )
 
@@ -162,8 +161,15 @@ def build(
         metadata_file.write_text(pc.get_package_metadata(PACKAGE_PATH))
         pc.create_sha256_hash(metadata_file)
         pc.create_sha256_hash(wheel_path)
+        print("Done.")
 
-        print(f"\n[green]Package {release_name}) created![/green]\n")
+    print("\n[green]Building source distribution for PyPI[/green]")
+    # Only need to build the source distribution once, as it'a single one for
+    # all the wheels built and it only uses their metadata
+    source_dist_path = PROJECT_ROOT / f"{PROJECT_NAME}-pypi"
+    pc.build_pypi_source_dist(source_dist_path, dist_folder, wheel_path)
+
+    print(f"\n[green]Package {release_name}) created![/green]\n")
 
 
 @app.command()

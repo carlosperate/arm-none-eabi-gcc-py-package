@@ -183,7 +183,7 @@ The first argument (shown as `<name_of_release>`) is the GCC release name as
 shown in the [versions section](#versions-and-platforms).
 
 If these optional flags are used (both or neither must be specified), it will
-build a specific platform version of the package:
+build a specific platform version of the package, otherwise it will build all:
 - `--os`: `linux`, `mac`, or `win`
 - `--arch`: `x86_64` or `aarch64`/`arm64`
 
