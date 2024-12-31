@@ -53,7 +53,6 @@ classifiers = [
     "Topic :: Software Development :: Compilers",
     "Programming Language :: C",
     "Programming Language :: C++",
-    "Programming Language :: Fortran",
     "Programming Language :: Python :: 3",
 ]
 
