@@ -178,7 +178,7 @@ def get_package_version(gcc_release_name: str):
     Get the package version string for the specified GCC release.
     """
     # Check the release name exists (all releases have win version), but ignore result
-    _ = pc.get_gcc_releases(gcc_release_name, "win", "x86_64")
+    _ = pc.get_gcc_releases(gcc_release_name, ("win", "x86_64"))
     package_version = pc.generate_package_version(gcc_release_name)
     print(f"{package_version}")
 

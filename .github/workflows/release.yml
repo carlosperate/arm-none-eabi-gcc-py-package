@@ -51,7 +51,7 @@ jobs:
           commit: ${{ github.sha }}
           skipIfReleaseExists: true
           replacesArtifacts: false
-          artifacts: "dist/*.whl, dist/*.whl.metadata, dist/*.sha256"
+          artifacts: "dist/*.whl, dist/*.whl.metadata, dist/*.sha256, dist/*.tar.gz"
 
 
   test-releases:
@@ -146,3 +146,53 @@ jobs:
       - name: Build simple blinky project
         working-directory: ./stm32f103/blink1/
         run: make all
+
+
+  update-simple-repository:
+    needs: test-releases
+    uses: ./.github/workflows/publish_repository.yml
+
+
+  publish-pypi:
+    needs: update-simple-repository
+    name: Publish to PyPI 📦
+    runs-on: ubuntu-22.04
+    if: github.event_name == 'workflow_dispatch'
+    environment:
+      # Need to configure this when ready
+      # https://pypi.org/manage/account/publishing/
+      # name: pypi
+      # url: https://pypi.org/p/wheel-stub
+      name: testpypi
+      url: https://test.pypi.org/p/arm-none-eabi-gcc-toolchain-t1
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Get the package version
+        id: get_version
+        working-directory: ./project
+        shell: bash
+        run: |
+          VERSION=$(uv run --with-requirements requirements.txt package_builder/cli.py get-package-version ${{ matrix.gcc }})
+          echo "version=$VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Download GH Release source distribution
+        run: |
+          mkdir dist
+          gh release download v${{ steps.get_version.outputs.version }} --repo ${{ github.server_url }}/${{ github.repository }} --dir dist --pattern "arm_none_eabi_gcc_toolchain-*.tar.gz"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Publish source distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
