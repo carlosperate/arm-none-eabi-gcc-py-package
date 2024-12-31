@@ -1,9 +1,9 @@
 name: Deploy Package Repository
 
-on: [workflow_dispatch]
+on: [workflow_dispatch, workflow_call]
 
 jobs:
-  build-repo:
+  build-package-repo:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -27,8 +27,8 @@ jobs:
           path: simple_repository_static/
 
 
-  deploy:
-    needs: build-repo
+  deploy-package-repo:
+    needs: build-package-repo
     permissions:
       contents: read
       pages: write

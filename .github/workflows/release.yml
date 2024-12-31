@@ -48,101 +48,13 @@ jobs:
         with:
           tag: v${{ steps.get_version.outputs.version }}
           name: Release v${{ steps.get_version.outputs.version }}
+          body: ${{ matrix.gcc }})
           commit: ${{ github.sha }}
           skipIfReleaseExists: true
           replacesArtifacts: false
-          artifacts: "dist/*.whl, dist/*.whl.metadata, dist/*.sha256"
+          artifacts: "dist/*.whl, dist/*.whl.metadata, dist/*.sha256, dist/*.tar.gz"
 
-
-  test-releases:
+  update-simple-repository:
     needs: build-and-release
     if: github.event_name == 'workflow_dispatch'
-    strategy:
-      matrix:
-        # macOS 13 is x86_64 and macOS 14 is arm64
-        os: [ubuntu-20.04, macos-13, macos-14, windows-2019]
-        gcc:
-          - "13.3.Rel1"
-          - "13.2.Rel1"
-          - "12.3.Rel1"
-          - "12.2.Rel1"
-          - "11.3.Rel1"
-          - "11.2-2022.02"
-          - "10.3-2021.10"
-          - "10-2020-q4"
-          - "9-2020-q2"
-          - "9-2019-q4"
-        exclude:
-          # macOS 14 runner is arm64 and is only available from 12.2.Rel1
-          - os: macos-14
-            gcc: "11.3.Rel1"
-          - os: macos-14
-            gcc: "11.2-2022.02"
-          - os: macos-14
-            gcc: "10.3-2021.10"
-          - os: macos-14
-            gcc: "10-2020-q4"
-          - os: macos-14
-            gcc: "9-2020-q2"
-          - os: macos-14
-            gcc: "9-2019-q4"
-      fail-fast: false
-    runs-on: ${{ matrix.os }}
-    name: "T: ${{ matrix.gcc }} - ${{ matrix.os }} wheel"
-    steps:
-      - name: Checkout the project in a subdirectory
-        uses: actions/checkout@v4
-        with:
-          path: "project"
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-
-      - name: Get the package version
-        id: get_version
-        working-directory: ./project
-        shell: bash
-        run: |
-          VERSION=$(uv run --with-requirements requirements.txt package_builder/cli.py get-package-version ${{ matrix.gcc }})
-          echo "version=$VERSION"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Download GH Release wheels
-        run: |
-          mkdir wheels
-          gh release download v${{ steps.get_version.outputs.version }} --repo ${{ github.server_url }}/${{ github.repository }} --dir wheels --pattern "*.whl"
-        env:
-          GH_TOKEN: ${{ github.token }}
-
-      - name: Verify GCC arm-none-eabi is not present yet
-        shell: bash
-        run: |
-          if arm-none-eabi-gcc --version; then
-            exit 1
-          else
-            exit 0
-          fi
-
-      - name: Install arm-none-eabi-gcc-toolchain from wheels
-        run: pip install --no-index --find-links=wheels/ arm-none-eabi-gcc-toolchain
-
-      #- name: Setup tmate session
-      #  uses: mxschmitt/action-tmate@v3
-
-      - name: Verify GCC Installation
-        run: arm-none-eabi-gcc --version
-
-      - name: Clone STM32 project
-        uses: actions/checkout@v4
-        with:
-          repository: 'trebisky/stm32f103'
-          ref: 7cfe5feaf02c653352331374d2ad178eb04efde7
-          path: 'stm32f103/'
-      - name: Build simple blinky project
-        working-directory: ./stm32f103/blink1/
-        run: make all
+    uses: ./.github/workflows/publish_repository.yml
