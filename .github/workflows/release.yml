@@ -53,6 +53,7 @@ jobs:
           skipIfReleaseExists: true
           replacesArtifacts: false
           artifacts: "dist/*.whl, dist/*.whl.metadata, dist/*.sha256, dist/*.tar.gz"
+          token: ${{ secrets.GH_TOKEN }}
 
 
   update-simple-repository:
