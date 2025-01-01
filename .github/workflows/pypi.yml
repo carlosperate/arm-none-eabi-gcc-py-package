@@ -10,29 +10,34 @@ jobs:
       matrix:
         # macOS 13 is x86_64 and macOS 14 is arm64
         os: [ubuntu-20.04, macos-13, macos-14, windows-2019]
-        python: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+        python: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+        exclude:
+          - os: macos-14
+            python: "3.6"
+          - os: macos-14
+            python: "3.7"
       fail-fast: false
     runs-on: ${{ matrix.os }}
     name: "Test ${{ matrix.os }} - Py ${{ matrix.python }}"
     steps:
       - name: Set the GH Release tag to step output
         id: get_tag
+        shell: bash
         run: echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
+
+      - name: Checkout the project in a subdirectory
+        uses: actions/checkout@v4
+        with:
+          path: "project"
 
       # macOS arm64 only has GCC releases from 12.2.Rel1
       - name: Determine if the rest of the workflow should run
         id: test_this_platform
+        shell: bash
+        working-directory: project/.github/workflows/
         run: |
-          python - << EOF
-          import platform as p
-          macOS_arm = 'darwin' in p.system().lower() and 'arm' in p.processor().lower()
-          # Expected tag in format v1.2.3
-          version_major = int('${{ steps.get_tag.outputs.tag }}'[1:].split('.')[0])
-          with open('continue.txt', 'w') as f:
-              f.write('true' if not macOS_arm or (macOS_arm and version_major >= 12) else 'false')
-          EOF
-          echo "run=$(cat continue.txt)"
-          echo "run=$(cat continue.txt)" >> $GITHUB_OUTPUT
+          echo "run=$(python is_compat_platform.py ${{ steps.get_tag.outputs.tag }})"
+          echo "run=$(python is_compat_platform.py ${{ steps.get_tag.outputs.tag }})" >> $GITHUB_OUTPUT
 
       - name: Set up Python
         if: steps.test_this_platform.outputs.run == 'true'
@@ -40,21 +45,13 @@ jobs:
         with:
           python-version: "${{ matrix.python }}"
 
-      # - name: Set the GCC version to step output
-      #  if: steps.test_this_platform.outputs.run == 'true'
-      #  id: get_gcc_version
-      #  working-directory: ./project
-      #  shell: bash
-      #  run: |
-      #    GCC_VERSION=$(gh release view ${{ steps.get_tag.outputs.tag }} --json body | jq -r ".body")
-      #    echo "version=$GCC_VERSION"
-      #    echo "version=$GCC_VERSION" >> $GITHUB_OUTPUT
-
       - name: Download GH Release wheels
         if: steps.test_this_platform.outputs.run == 'true'
+        shell: bash
         run: |
           mkdir wheels
           gh release download ${{ steps.get_tag.outputs.tag }} --repo ${{ github.server_url }}/${{ github.repository }} --dir wheels --pattern "*.whl"
+          ls -la wheels
         env:
           GH_TOKEN: ${{ github.token }}
 
@@ -102,7 +99,7 @@ jobs:
       # name: pypi
       # url: https://pypi.org/p/wheel-stub
       name: testpypi
-      url: https://test.pypi.org/p/arm-none-eabi-gcc-toolchain-t1
+      url: https://test.pypi.org/p/arm-none-eabi-gcc-toolchain
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
     steps:
@@ -118,9 +115,11 @@ jobs:
       - name: Download GH Release source distribution
         run: |
           mkdir dist
-          gh release download v${{ steps.get_version.outputs.version }} --repo ${{ github.server_url }}/${{ github.repository }} --dir dist --pattern "arm_none_eabi_gcc_toolchain-*.tar.gz"
+          gh release download ${{ steps.get_tag.outputs.tag }} --repo ${{ github.server_url }}/${{ github.repository }} --dir dist --pattern "arm_none_eabi_gcc_toolchain-*.tar.gz"
         env:
           GH_TOKEN: ${{ github.token }}
 
       - name: Publish source distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
