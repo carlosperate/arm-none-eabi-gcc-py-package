@@ -1,0 +1,4 @@
+recursive-include src/arm_none_eabi_gcc_toolchain/{gcc_folder} *
+exclude MANIFEST.in.txt
+exclude pyproject.toml.text
+exclude src/arm_none_eabi_gcc_toolchain/executable_launcher.py.txt

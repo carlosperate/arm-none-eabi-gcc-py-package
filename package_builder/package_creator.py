@@ -23,7 +23,6 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
-from package_builder import file_templates
 from package_builder import __version__ as package_builder_version
 from package_builder.gcc_releases import gcc_releases, gcc_short_versions
 
@@ -239,7 +238,7 @@ def generate_package_version(gcc_release_name: str) -> str:
 
 
 def create_package_files(
-    package_path: Path, gcc_path: Path, package_version: str
+    project_path: Path, package_path: Path, gcc_path: Path, package_version: str
 ) -> None:
     """
     Create the package files with the provided GCC toolchain folder and
@@ -248,14 +247,19 @@ def create_package_files(
     :param package_path: Path to the package directory.
     :param gcc_folder: Path to the GCC toolchain folder.
     """
+    project_path = project_path.resolve()
     package_path = package_path.resolve()
     gcc_path = gcc_path.resolve()
     print(f"\nCreating package files in: {package_path.relative_to(Path.cwd())}")
+    if not project_path.is_dir():
+        raise FileNotFoundError(f"Project directory not found: {project_path}")
     if not package_path.is_dir():
         raise FileNotFoundError(f"Package directory not found: {package_path}")
     if not gcc_path.is_dir():
         raise FileNotFoundError(f"GCC toolchain folder not found: {gcc_path}")
-    # Check gcc_path is inside package_path
+    # Check gcc_path is inside package_path, which is inside the project_path
+    if not os.path.commonpath([project_path, package_path]) == str(project_path):
+        raise ValueError(f"Package folder not inside the project path: {package_path}")
     if not os.path.commonpath([package_path, gcc_path]) == str(package_path):
         raise ValueError(
             f"GCC toolchain folder not inside the package path: {gcc_path}"
@@ -282,30 +286,29 @@ def create_package_files(
         raise FileNotFoundError("No executables found in the GCC toolchain bin folder")
 
     # Create a python file per executable to launch it
+    py_code = (package_path / "executable_launcher.py.txt").read_text()
     for bin_file, func_name in bin_files:
-        with open(package_path / f"{func_name}.py", "w") as file:
-            file.write(
-                file_templates.executable_launcher.format(
-                    bin=bin_file, func_name=func_name, gcc_folder=gcc_folder
-                )
-            )
+        (package_path / f"{func_name}.py").write_text(
+            py_code.format(bin=bin_file, func_name=func_name, gcc_folder=gcc_folder)
+        )
 
-    # Create the package pyproject.toml file
+    # Create the project pyproject.toml file from template pyproject.toml.txt
     pyproject_scripts = []
     for bin_file, func_name in bin_files:
         pyproject_scripts.append(
             f'"{bin_file.replace(".exe", "")}" = "{PACKAGE_NAME}.{func_name}:{func_name}"'
         )
-    with open(package_path.parents[1] / "pyproject.toml", "w") as file:
-        file.write(
-            file_templates.pyproject_toml.format(
-                version=package_version, bin_scripts="\n".join(pyproject_scripts)
-            )
-        )
+    pyproject_toml_template = (project_path / "pyproject.toml.txt").read_text()
+    pyproject_toml_str = pyproject_toml_template.format(
+        version=package_version, bin_scripts="\n".join(pyproject_scripts)
+    )
+    (project_path / "pyproject.toml").write_text(pyproject_toml_str)
 
-    # Create the MANIFEST.in file
-    with open(package_path.parents[1] / "MANIFEST.in", "w") as file:
-        file.write(file_templates.manifest_in.format(gcc_folder=gcc_folder))
+    # Read the template MANIFEST.in.txt file and create the final MANIFEST.in
+    manifest_in_template = (project_path / "MANIFEST.in.txt").read_text()
+    (project_path / "MANIFEST.in").write_text(
+        manifest_in_template.format(gcc_folder=gcc_folder)
+    )
 
 
 def build_wheel(package_path: Path, dist_path: Path, wheel_plat: str) -> None:
@@ -462,14 +465,16 @@ def build_pypi_source_dist(
             "--outdir",
             str(dist_path),
             "--config-setting",
-            f'source_wheel={wheel_path}',
+            f"source_wheel={wheel_path}",
         ],
         check=True,
         cwd=pypi_package_path,
     )
 
     if not source_dist_path.is_file():
-        raise FileNotFoundError(f"Source distribution file not created: {source_dist_path}")
+        raise FileNotFoundError(
+            f"Source distribution file not created: {source_dist_path}"
+        )
 
     return source_dist_path
 
@@ -488,6 +493,7 @@ def build_package_for_local_machine() -> None:
         gcc_zip_file = download_toolchain(gcc_release.files["url"])
         gcc_path = uncompress_toolchain(gcc_zip_file, PACKAGE_PATH)
         create_package_files(
+            PROJECT_PATH,
             PACKAGE_PATH,
             gcc_path,
             generate_package_version(gcc_release.release_name),

@@ -147,7 +147,7 @@ def build(
         # Create the package files with the GCC toolchain folder inside
         print("\n[green]Creating Python package files[/green]")
         package_version = pc.generate_package_version(gcc_release.release_name)
-        pc.create_package_files(PACKAGE_PATH, gcc_path, package_version)
+        pc.create_package_files(PROJECT_PATH, PACKAGE_PATH, gcc_path, package_version)
 
         print("\n[green]Building Python wheel[/green]")
         dist_folder = PROJECT_ROOT / "dist"
