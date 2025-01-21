@@ -32,17 +32,17 @@ jobs:
       - run: pip install -r requirements.txt
 
       - name: Build all platform packages for this release
-        run: python -m package_builder build ${{ matrix.gcc }}
+        run: python tools.py package-build ${{ matrix.gcc }}
 
       - name: Get the package version
         if: github.event_name == 'workflow_dispatch'
         id: get_version
         run: |
-          VERSION=$(python -m package_builder get-package-version ${{ matrix.gcc }})
+          VERSION=$(python tools.py package-get-version ${{ matrix.gcc }})
           echo "version=$VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Create GitHub Release (if not exists)
+      - name: Create GitHub Release on manual trigger (if it doesn't exist)
         if: github.event_name == 'workflow_dispatch'
         uses: ncipollo/release-action@v1
         with:

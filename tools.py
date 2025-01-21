@@ -9,26 +9,22 @@ import typer
 from typing_extensions import Annotated
 from rich import print, console, panel
 
-try:
-    from package_builder import package_creator as pc
-except ImportError:
-    # This is a bit of a hack, when running as a script, the package_builder
-    # module is not available, so add the directory to the sys.path
-    import sys
-
-    sys.path.append(str(Path(__file__).resolve().parents[1]))
-
+from simple_repository_generator.repo_gen import generate_simple_repository
 from package_builder import package_creator as pc
-from package_builder.package_creator import PACKAGE_ROOT as PROJECT_PATH
 from package_builder.package_creator import (
     PROJECT_NAME,
     PACKAGE_NAME,
+    PACKAGE_ROOT,
     PACKAGE_PATH,
 )
 
+
 app = typer.Typer()
 err_console = console.Console(stderr=True)
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = Path(__file__).resolve().parents[0]
+PACKAGE_PYPI_ROOT = PROJECT_ROOT / f"{PROJECT_NAME}-pypi"
+SIMPLE_REPO_DEFAULT_GH_REPO = "carlosperate/arm-none-eabi-gcc-py-package"
+SIMPLE_REPO_DEFAULT_OP_PATH = PROJECT_ROOT / "simple_repository_static"
 
 
 def error_exit(message: str, exit_code: int = 1):
@@ -36,21 +32,19 @@ def error_exit(message: str, exit_code: int = 1):
     raise typer.Exit(code=exit_code)
 
 
-@app.command()
-def clean():
+def package_clean():
     """
     Cleans the project from any build artifacts.
     """
-    print("[green]Cleaning project[/green]")
     files = [
-        PROJECT_ROOT / PROJECT_NAME / "MANIFEST.in",
-        PROJECT_ROOT / PROJECT_NAME / "pyproject.toml",
+        PACKAGE_ROOT / "MANIFEST.in",
+        PACKAGE_ROOT / "pyproject.toml",
     ]
     folders = [
         PROJECT_ROOT / ".mypy_cache",
-        PROJECT_ROOT / PROJECT_NAME / "build",
-        PROJECT_ROOT / PROJECT_NAME / "src" / f"{PACKAGE_NAME}.egg-info",
-        PROJECT_ROOT / PROJECT_NAME / "build",
+        PACKAGE_ROOT / "build",
+        PACKAGE_ROOT / "src" / f"{PACKAGE_NAME}.egg-info",
+        SIMPLE_REPO_DEFAULT_OP_PATH,
     ]
 
     print("\nDeleting explicitly files and folders...")
@@ -100,7 +94,13 @@ def clean():
 
 
 @app.command()
-def build(
+def clean():
+    print("[green]Cleaning package project[/green]")
+    package_clean()
+
+
+@app.command()
+def package_build(
     release: Annotated[str, typer.Argument(help="GCC release name (can be 'latest')")],
     os: Annotated[
         Optional[str], typer.Option(help="Specify Operating System (mac/win/linux)")
@@ -118,10 +118,10 @@ def build(
     """
     print("\n[green]Start building Python package/s[/green]")
 
-    print(f"Package directory: {PROJECT_PATH.relative_to(Path.cwd())}\n")
-    if not PROJECT_PATH.is_dir() or not PACKAGE_PATH.is_dir():
+    print(f"Package root directory: {PACKAGE_ROOT.relative_to(Path.cwd())}\n")
+    if not PACKAGE_ROOT.is_dir() or not PACKAGE_PATH.is_dir():
         error_exit(
-            f"Project/Package directory not found:\n\t{PROJECT_PATH}\n\t{PACKAGE_PATH}"
+            f"Project/Package directory not found:\n\t{PACKAGE_ROOT}\n\t{PACKAGE_PATH}"
         )
 
     if not (os and arch) and (os or arch):
@@ -147,13 +147,13 @@ def build(
         # Create the package files with the GCC toolchain folder inside
         print("\n[green]Creating Python package files[/green]")
         package_version = pc.generate_package_version(gcc_release.release_name)
-        pc.create_package_files(PROJECT_PATH, PACKAGE_PATH, gcc_path, package_version)
+        pc.create_package_files(PACKAGE_ROOT, PACKAGE_PATH, gcc_path, package_version)
 
         print("\n[green]Building Python wheel[/green]")
         dist_folder = PROJECT_ROOT / "dist"
         dist_folder.mkdir(exist_ok=True)
         wheel_path = pc.build_wheel(
-            PROJECT_PATH, dist_folder, gcc_release.files["wheel_plat"]
+            PACKAGE_ROOT, dist_folder, gcc_release.files["wheel_plat"]
         )
 
         print("\n[green]Producing metadata files[/green]")
@@ -164,16 +164,15 @@ def build(
         print("Done.")
 
     print("\n[green]Building source distribution for PyPI[/green]")
-    # Only need to build the source distribution once, as it'a single one for
-    # all the wheels built and it only uses their metadata
-    source_dist_path = PROJECT_ROOT / f"{PROJECT_NAME}-pypi"
-    pc.build_pypi_source_dist(source_dist_path, dist_folder, wheel_path)
+    # Only need to build the source distribution once, as it'a single tar file
+    # for all the wheels built and it only uses their metadata
+    pc.build_pypi_source_dist(PACKAGE_PYPI_ROOT, dist_folder, wheel_path)
 
     print(f"\n[green]Package {release_name}) created![/green]\n")
 
 
 @app.command()
-def get_package_version(gcc_release_name: str):
+def package_get_version(gcc_release_name: str):
     """
     Get the package version string for the specified GCC release.
     """
@@ -181,6 +180,32 @@ def get_package_version(gcc_release_name: str):
     _ = pc.get_gcc_releases(gcc_release_name, ("win", "x86_64"))
     package_version = pc.generate_package_version(gcc_release_name)
     print(f"{package_version}")
+
+
+@app.command()
+def repo_generate(
+    repo: Annotated[Optional[str], typer.Option()] = SIMPLE_REPO_DEFAULT_GH_REPO,
+    output: Annotated[Optional[Path], typer.Option()] = SIMPLE_REPO_DEFAULT_OP_PATH,
+    overwrite: bool = True,
+):
+    """
+    Generate a simple repository from wheels found in a GH repository Releases.
+
+    :param repo: The GitHub repository to generate the repository from.
+    :param overwrite: Overwrite the output folder if it exists.
+    """
+    print(f"Generating simple repository from GH Releases in: {repo}")
+    if overwrite:
+        if output.exists():
+            if not output.is_dir():
+                raise NotADirectoryError(f"Output path '{output}' is not a directory.")
+            shutil.rmtree(output)
+    elif output.exists():
+        raise FileExistsError(
+            f"Output path {output} already exists, delete it or use --overwrite."
+        )
+    print(f"Output path: {output.relative_to(Path.cwd())}")
+    generate_simple_repository(repo, output)
 
 
 def main():

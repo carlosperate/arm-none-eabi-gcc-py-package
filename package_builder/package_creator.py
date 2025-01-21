@@ -29,8 +29,8 @@ from package_builder.gcc_releases import gcc_releases, gcc_short_versions
 
 PROJECT_NAME = "arm-none-eabi-gcc-toolchain"
 PACKAGE_NAME = "arm_none_eabi_gcc_toolchain"
-PROJECT_PATH = Path(__file__).resolve().parents[1] / PROJECT_NAME
-PACKAGE_PATH = PROJECT_PATH / "src" / PACKAGE_NAME
+PACKAGE_ROOT = Path(__file__).resolve().parents[1] / PROJECT_NAME
+PACKAGE_PATH = PACKAGE_ROOT / "src" / PACKAGE_NAME
 
 # NameTuple with the GCC info
 GccInfo = namedtuple("GccInfo", ["files", "release_name", "os_arch"])
@@ -49,7 +49,7 @@ def get_gcc_releases(
     :return: List of GCC releases.
     """
     # Set default values
-    if release_name is "latest":
+    if release_name == "latest":
         # Python dictionaries are now ordered, so the latest release is the first one
         release_name = list(gcc_releases.keys())[0]
     if release_name not in gcc_releases:
@@ -480,10 +480,10 @@ def build_pypi_source_dist(
 
 
 def build_package_for_local_machine() -> None:
-    print(f"Project directory: {PROJECT_PATH.relative_to(Path.cwd())}")
-    if not PROJECT_PATH.is_dir() or not PACKAGE_PATH.is_dir():
+    print(f"Project directory: {PACKAGE_ROOT.relative_to(Path.cwd())}")
+    if not PACKAGE_ROOT.is_dir() or not PACKAGE_PATH.is_dir():
         raise FileNotFoundError(
-            f"Project/Package directory not found:\n\t{PROJECT_PATH}\n\t{PACKAGE_PATH}"
+            f"Project/Package directory not found:\n\t{PACKAGE_ROOT}\n\t{PACKAGE_PATH}"
         )
 
     gcc_releases_list = get_gcc_releases()
@@ -493,13 +493,13 @@ def build_package_for_local_machine() -> None:
         gcc_zip_file = download_toolchain(gcc_release.files["url"])
         gcc_path = uncompress_toolchain(gcc_zip_file, PACKAGE_PATH)
         create_package_files(
-            PROJECT_PATH,
+            PACKAGE_ROOT,
             PACKAGE_PATH,
             gcc_path,
             generate_package_version(gcc_release.release_name),
         )
         wheel_path = build_wheel(
-            PROJECT_PATH, PROJECT_PATH / "dist", gcc_release.files["wheel_plat"]
+            PACKAGE_ROOT, PACKAGE_ROOT / "dist", gcc_release.files["wheel_plat"]
         )
         metadata = get_package_metadata(PACKAGE_PATH)
         metadata_file = wheel_path.with_suffix(f"{wheel_path.suffix}.metadata")
