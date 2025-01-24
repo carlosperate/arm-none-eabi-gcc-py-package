@@ -9,9 +9,9 @@ import typer
 from typing_extensions import Annotated
 from rich import print, console, panel
 
-from simple_repository_generator.repo_gen import generate_simple_repository
-from package_builder import package_creator as pc
-from package_builder.package_creator import (
+from tools_src.simple_repository_generator import generate_simple_repository
+from tools_src import package_creator as pc
+from tools_src.package_creator import (
     PROJECT_NAME,
     PACKAGE_NAME,
     PACKAGE_ROOT,
@@ -100,7 +100,7 @@ def clean():
 
 
 @app.command()
-def package_build(
+def package_creator(
     release: Annotated[str, typer.Argument(help="GCC release name (can be 'latest')")],
     os: Annotated[
         Optional[str], typer.Option(help="Specify Operating System (mac/win/linux)")
@@ -111,7 +111,7 @@ def package_build(
     ] = None,
 ):
     """
-    Builds the Python package with the selected GCC release.
+    Generates and builds the Python package/s with the selected GCC release.
 
     If os and arch are not set it will build all versions of the release.
     Otherwise, it will build the specified os and arch (both must be set).

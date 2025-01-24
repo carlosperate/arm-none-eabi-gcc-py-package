@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 import re
-import sys
 import hashlib
 from pathlib import Path
 from typing import Dict, List
@@ -11,10 +10,7 @@ import requests
 from github import Github
 from rich.progress import Progress, BarColumn, DownloadColumn, TransferSpeedColumn
 
-# A bit of a hack, ensure the git repo root is in the PATH to be able to reach the package_builder module
-sys.path.append(str(Path(__file__).resolve().parents[1]))
-
-from package_builder.package_creator import PROJECT_NAME
+from tools_src.package_creator import PROJECT_NAME
 
 
 @dataclass
@@ -64,7 +60,7 @@ def get_gh_releases_wheel_urls(
                                 f"{sha256_file_contents}\n"
                                 f"{wheel_sha256}"
                             )
-                        print(f"\tFound SHA-256 ({wheel_sha256}) in\n\t\t{asset.name}")
+                        print(f"\tFound wheel SHA-256 ({wheel_sha256}) in\n\t\t{asset.name}")
                 elif asset.name == f"{asset_wheel.name}.metadata":
                     # Ensure the URL is the same as the wheel URL + ".metadata" extension
                     if (

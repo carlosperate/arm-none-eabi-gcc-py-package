@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import Optional, List, Tuple
 from collections import namedtuple
 
-
 import tomli
 from rich.progress import (
     Progress,
@@ -23,10 +22,11 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
-from package_builder import __version__ as package_builder_version
-from package_builder.gcc_releases import gcc_releases, gcc_short_versions
+from tools_src.gcc_releases import gcc_releases, gcc_short_versions
 
-
+# The project README contains information about the versioning
+# and this version string should always be single increasing integer.
+PACKAGE_CREATOR_VERSION = "0"
 PROJECT_NAME = "arm-none-eabi-gcc-toolchain"
 PACKAGE_NAME = "arm_none_eabi_gcc_toolchain"
 PACKAGE_ROOT = Path(__file__).resolve().parents[1] / PROJECT_NAME
@@ -234,7 +234,7 @@ def generate_package_version(gcc_release_name: str) -> str:
     :param gcc_release: GCC release name.
     :return: Combined package version string.
     """
-    return gcc_short_versions[gcc_release_name] + "." + package_builder_version
+    return gcc_short_versions[gcc_release_name] + "." + PACKAGE_CREATOR_VERSION
 
 
 def create_package_files(
