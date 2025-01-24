@@ -1,13 +1,9 @@
 [build-system]
-# Temporarily use my fork until fixes are included upstream
-# https://github.com/wheel-next/wheel-stub/issues/5
-# https://github.com/wheel-next/wheel-stub/issues/6
-# https://github.com/wheel-next/wheel-stub/issues/7
-requires = ["wheel-stub @ git+https://github.com/carlosperate/wheel-stub@merge"]
+requires = ["wheel-stub >= 0.4.0"]
 build-backend = "wheel_stub.buildapi"
 
 [tool.wheel_stub]
 index_url = "https://carlosperate.github.io/arm-none-eabi-gcc-py-package/"
 
 [project]
-requires-python = ">=3.8"
+requires-python = ">=3.6"
