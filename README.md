@@ -188,8 +188,9 @@ python tools.py package-creator <name_of_release> --os <operating system> --arch
 The first argument (shown as `<name_of_release>`) is the GCC release name as
 shown in the [versions section](#versions-and-platforms).
 
-The flags are optional, both or neither must be used. They can specify a
-platform version of the package, or their omission will build all platforms:
+All flags are optional, `all` builds wheels for all platforms.
+The `os` and `arch` specify a platform version of the package,
+both or neither must be used.
 - `--os`: `linux`, `mac`, or `win`
 - `--arch`: `x86_64` or `aarch64`/`arm64`
 
@@ -221,7 +222,7 @@ python tools.py repo-generate
 
 ## License
 
-All the source code in this repository is licensed under the MIT license.
+All the source code in this repository is licensed under the [MIT license](LICENSE).
 
 The generated wheels contain the GNU Arm Embedded Toolchain,
 which is licensed under the GPL v3 license.

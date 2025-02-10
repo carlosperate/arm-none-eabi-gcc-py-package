@@ -1,4 +1,4 @@
-name: Publish to (test) PyPI
+name: Publish to (test) PyPI on GH Release
 
 on:
   release:

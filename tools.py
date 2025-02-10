@@ -102,6 +102,9 @@ def clean():
 @app.command()
 def package_creator(
     release: Annotated[str, typer.Argument(help="GCC release name (can be 'latest')")],
+    all: bool = typer.Option(
+        False, help="Build all versions of the release, ignoring --os and --arch."
+    ),
     os: Annotated[
         Optional[str], typer.Option(help="Specify Operating System (mac/win/linux)")
     ] = None,
@@ -126,10 +129,15 @@ def package_creator(
 
     if not (os and arch) and (os or arch):
         error_exit("Both --os and --arch must be set if one of them is set.")
+    if all and (os or arch):
+        error_exit("Cannot use --all with --os or --arch.")
 
-    os_arch = (os, arch)
-    if not os and not arch:
+    if all:
         os_arch = None
+    elif os and arch:
+        os_arch = (os, arch)
+    else:
+        os_arch = (None, None)
 
     selected_gcc_releases = pc.get_gcc_releases(release, os_arch)
     for gcc_release in selected_gcc_releases:
