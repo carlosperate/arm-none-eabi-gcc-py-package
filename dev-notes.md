@@ -21,35 +21,43 @@ trigger.
 
 Everything else should happen automatically.
 
-
 ```
-                       │  Automatically  │                     
-      Manually              Triggered         Automatically    
-    Triggered CI       │   GH Releases   │    triggered CI     
-                                                               
-┌──────────────────┐   │ ┌────────────┐  │                     
-│   Build Wheels   │     │            │     ┌─────────────────┐
-│       and        │ ┌───► GH Release ├─────►  Test release   │
-│   source dist    │ │   │  v13.3.x   │     │    wheels &     │
-└────────┬─────────┘ │ │ │            │  │  │  PyPI deploy    │
-         │           │   └────────────┘     └─────────────────┘
-         │           │ │                 │                     
-┌────────▼─────────┐ │   ┌────────────┐                        
-│                  │ │ │ │            │  │  ┌─────────────────┐
-│     Publish      ├─┘   │ GH Release │     │  Test release   │
-│   GH Release/s   ├─────►  v13.2.x   ├─────►    wheels &     │
-│                  ├─┐   │            │     │  PyPI deploy    │
-└────────┬─────────┘ │ │ └────────────┘  │  └─────────────────┘
-         │           │                                         
-         │           │ │      ...        │                     
-┌────────▼─────────┐ │                                         
-│                  │ │ │ ┌────────────┐  │                     
-│    Generate &    │ │   │            │     ┌─────────────────┐
-│  deploy Simple   │ └───► GH Release ├─────►  Test release   │
-│   Package Repo   │     │   v9.2.x   │     │    wheels &     │
-│                  │   │ │            │  │  │  PyPI deploy    │
-└──────────────────┘     └────────────┘     └─────────────────┘
-                       │                 │                     
+                        │                 │                     
+       Manually         │    Triggered    │    Automatically    
+     Triggered CI       │   GH Releases   |    triggered CI     
+                        │                 │                     
+ ┌──────────────────┐                                           
+ │                  │   │                 │                     
+ │   Build Wheels   │                                           
+ │       and        │   │                 │                     
+ │   source dist    │                                           
+ │                  │   │                 │                     
+ └──────────────────┘                                           
+          │             │                 │                     
+          │                                                     
+ ┌────────▼─────────┐   │ ┌────────────┐  │                     
+ │                  │     │            │     ┌─────────────────┐
+ │    Test Wheels   │ ┌───► GH Release ├─────►  Test release   │
+ │                  │ │   │  v13.3.x   │  │  │    wheels &     │
+ └────────┬─────────┘ │ │ │            │  │  │  PyPI deploy    │
+          │           │   └────────────┘     └─────────────────┘
+          │           │ │                 │                     
+ ┌────────▼─────────┐ │   ┌────────────┐                        
+ │                  │ │ │ │            │  │  ┌─────────────────┐
+ │     Publish      ├─┘   │ GH Release │     │  Test release   │
+ │   GH Release/s   ├─────►  v13.2.x   ├─────►    wheels &     │
+ │                  ├─┐   │            │     │  PyPI deploy    │
+ └────────┬─────────┘ │ │ └────────────┘  │  └─────────────────┘
+          │           │                                         
+          │           │ │      ...        │                     
+ ┌────────▼─────────┐ │                                         
+ │                  │ │ │ ┌────────────┐  │                     
+ │    Generate &    │ │   │            │     ┌─────────────────┐
+ │  deploy Simple   │ └───► GH Release ├─────►  Test release   │
+ │   Package Repo   │     │   v9.2.x   │     │    wheels &     │
+ │                  │   │ │            │  │  │  PyPI deploy    │
+ └──────────────────┘     └────────────┘     └─────────────────┘
+                        │                 │                     
 ```
 
 ## Manual build source distribution

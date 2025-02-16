@@ -197,9 +197,11 @@ def package_versions():
     """
     releases = pc.get_gcc_release_names()
     print(f'["{releases[0]}"', end="")
-    for release in releases:
+    for release in releases[1:]:
         print(f', "{release}"', end="")
     print("]")
+    # This is used only to experiment with CI and have fewer jobs running
+    # print('["13.3.Rel1", "13.2.Rel1", "12.3.Rel1", "9-2019-q4"]')
 
 
 @app.command()

@@ -5,6 +5,7 @@ on: [workflow_dispatch, workflow_call]
 jobs:
   build-package-repo:
     runs-on: ubuntu-latest
+    name: Build Package Repository
     steps:
       - uses: actions/checkout@v4
 
@@ -28,6 +29,7 @@ jobs:
 
   deploy-package-repo:
     needs: build-package-repo
+    name: Deploy Package Repository
     permissions:
       contents: read
       pages: write

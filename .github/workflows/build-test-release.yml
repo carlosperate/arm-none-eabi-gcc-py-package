@@ -1,0 +1,203 @@
+name: Build, Test & Release
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  setup-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - run: pip install -r requirements.txt
+      - run: echo "matrix=$(python tools.py package-versions)"
+      - id: set-matrix
+        run: echo "matrix=$(python tools.py package-versions)" >> $GITHUB_OUTPUT
+
+
+  build:
+    needs: setup-matrix
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        gcc: ${{ fromJSON(needs.setup-matrix.outputs.matrix) }}
+      fail-fast: false
+    name: Build ${{ matrix.gcc }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - run: pip install -r requirements.txt
+
+      - name: Build all platform packages for this release
+        run: python tools.py package-creator ${{ matrix.gcc }} --all
+
+      - run: ls -la dist/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.gcc }}
+          path: dist/
+          if-no-files-found: error
+          compression-level: 0
+          overwrite: false
+          include-hidden-files: false
+
+
+  test-wheels:
+    needs: ["setup-matrix", "build"]
+    strategy:
+      matrix:
+        # macOS 13 is x86_64 and macOS 14 is arm64
+        os: [ubuntu-20.04, ubuntu-22.04-arm, macos-13, macos-14, windows-2019]
+        python: ["3.6", "3.8", "3.13"]
+        gcc: ${{ fromJSON(needs.setup-matrix.outputs.matrix) }}
+        exclude:
+          # macOS arm64 and Ubuntu aarch64 only has Python 3.8+
+          - os: macos-14
+            python: "3.6"
+          - os: ubuntu-22.04-arm
+            python: "3.6"
+          # Avoid tests with Python 3.8 for platforms that can do 3.6
+          - os: ubuntu-20.04
+            python: "3.8"
+          - os: macos-13
+            python: "3.8"
+          - os: windows-2019
+            python: "3.8"
+          # GCC 13+ need macOS 12+ and last pip release for Py3.6 is
+          # not compatible with that wheel platform specification
+          - os: macos-13
+            python: "3.6"
+            gcc: "13.2.Rel1"
+          - os: macos-13
+            python: "3.6"
+            gcc: "13.3.Rel1"
+          # arm64 macOS first compatible GCC release is 12.2.Rel1
+          - os: macos-14
+            gcc: "11.3.Rel1"
+          - os: macos-14
+            gcc: "11.2-2022.02"
+          - os: macos-14
+            gcc: "10.3-2021.10"
+          - os: macos-14
+            gcc: "10-2020-q4"
+          - os: macos-14
+            gcc: "9-2020-q2"
+          - os: macos-14
+            gcc: "9-2019-q4"
+        include:
+          # GCC 13+ need macOS 12+ and last pip release for Py3.6 is
+          # not compatible with that wheel platform specification
+          - os: macos-13
+            python: "3.7"
+            gcc: "13.2.Rel1"
+          - os: macos-13
+            python: "3.7"
+            gcc: "13.3.Rel1"
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    name: "T: ${{ matrix.gcc }} Py${{ matrix.python }} ${{ matrix.os }}"
+    steps:
+      #- uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.gcc }}
+          path: wheels/
+      - run: ls -la wheels/
+        shell: bash
+
+      - name: Verify GCC arm-none-eabi is not present yet
+        shell: bash
+        run: |
+          if arm-none-eabi-gcc --version; then
+            exit 1
+          else
+            exit 0
+          fi
+
+      - name: Install arm-none-eabi-gcc-toolchain wheel
+        run: pip install --only-binary=":all:" --no-index --find-links=wheels/ arm-none-eabi-gcc-toolchain
+
+      - name: Verify GCC Installation
+        run: arm-none-eabi-gcc --version
+
+      - name: Clone STM32 project
+        uses: actions/checkout@v4
+        with:
+          repository: 'trebisky/stm32f103'
+          ref: 7cfe5feaf02c653352331374d2ad178eb04efde7
+          path: 'stm32f103/'
+      - name: Build simple blinky project
+        working-directory: ./stm32f103/blink1/
+        run: make all
+
+
+  release:
+    needs: ["setup-matrix", "test-wheels"]
+    name: Release on workflow dispatch
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        gcc: ${{ fromJSON(needs.setup-matrix.outputs.matrix) }}
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - run: pip install -r requirements.txt
+
+      - name: Get the package version
+        id: get_version
+        run: |
+          VERSION=$(python tools.py package-get-version ${{ matrix.gcc }})
+          echo "version=$VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.gcc }}
+          path: dist/
+      - run: ls -la dist/
+
+      - name: Create GitHub Release on manual trigger (if it doesn't exist)
+        uses: ncipollo/release-action@v1
+        with:
+          tag: v${{ steps.get_version.outputs.version }}
+          name: Release v${{ steps.get_version.outputs.version }}
+          # body: ${{ matrix.gcc }}
+          commit: ${{ github.sha }}
+          skipIfReleaseExists: true
+          replacesArtifacts: false
+          artifacts: "dist/*.whl, dist/*.whl.metadata, dist/*.sha256, dist/*.tar.gz"
+          token: ${{ secrets.GH_TOKEN }}
+
+
+  update-simple-repository:
+    needs: release
+    name: Update repo on manual trigger
+    if: github.event_name == 'workflow_dispatch'
+    uses: ./.github/workflows/publish_repository.yml
