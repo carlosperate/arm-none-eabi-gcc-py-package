@@ -14,7 +14,7 @@ jobs:
         with:
           python-version: "3.11"
           cache: "pip"
-      - run: pip install -r requirements.txt
+      - run: pip install -r requirements.txt --disable-pip-version-check
       - run: echo "matrix=$(python tools.py package-versions)"
       - id: set-matrix
         run: echo "matrix=$(python tools.py package-versions)" >> $GITHUB_OUTPUT
@@ -36,8 +36,10 @@ jobs:
         with:
           python-version: "3.11"
           cache: "pip"
+        env:
+          PIP_DISABLE_PIP_VERSION_CHECK: 1
 
-      - run: pip install -r requirements.txt
+      - run: pip install -r requirements.txt --disable-pip-version-check
 
       - name: Build all platform packages for this release
         run: python tools.py package-creator ${{ matrix.gcc }} --all
@@ -55,7 +57,7 @@ jobs:
           include-hidden-files: false
 
 
-  test-wheels:
+  test:
     needs: ["setup-matrix", "build"]
     strategy:
       matrix:
@@ -69,13 +71,6 @@ jobs:
             python: "3.6"
           - os: ubuntu-22.04-arm
             python: "3.6"
-          # Avoid tests with Python 3.8 for platforms that can do 3.6
-          - os: ubuntu-20.04
-            python: "3.8"
-          - os: macos-13
-            python: "3.8"
-          - os: windows-2019
-            python: "3.8"
           # GCC 13+ need macOS 12+ and last pip release for Py3.6 is
           # not compatible with that wheel platform specification
           - os: macos-13
@@ -110,19 +105,19 @@ jobs:
     runs-on: ${{ matrix.os }}
     name: "T: ${{ matrix.gcc }} Py${{ matrix.python }} ${{ matrix.os }}"
     steps:
-      #- uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
+        env:
+          PIP_DISABLE_PIP_VERSION_CHECK: 1
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           name: ${{ matrix.gcc }}
-          path: wheels/
-      - run: ls -la wheels/
+          path: dist/
+      - run: ls -la dist/
         shell: bash
 
       - name: Verify GCC arm-none-eabi is not present yet
@@ -135,8 +130,7 @@ jobs:
           fi
 
       - name: Install arm-none-eabi-gcc-toolchain wheel
-        run: pip install --only-binary=":all:" --no-index --find-links=wheels/ arm-none-eabi-gcc-toolchain
-
+        run: pip install --only-binary=":all:" --no-index --find-links=dist/ arm-none-eabi-gcc-toolchain
       - name: Verify GCC Installation
         run: arm-none-eabi-gcc --version
 
@@ -150,10 +144,46 @@ jobs:
         working-directory: ./stm32f103/blink1/
         run: make all
 
+      # The following steps test the source distribution
+      # wheel-stub is Python 3.8+, so only run the steps for those versions
+      - name: Uninstall arm-none-eabi-gcc-toolchain
+        if: ${{ matrix.python != '3.6' && matrix.python != '3.7' }}
+        run: pip uninstall -y arm-none-eabi-gcc-toolchain
+      - name: Check arm-none-eabi-gcc it's no longer available
+        if: ${{ matrix.python != '3.6' && matrix.python != '3.7' }}
+        shell: bash
+        run: |
+          if arm-none-eabi-gcc --version; then
+            exit 1
+          else
+            exit 0
+          fi
+
+      - name: Download wheel-stub wheel dependency
+        if: ${{ matrix.python != '3.6' && matrix.python != '3.7' }}
+        shell: bash
+        run: |
+          pip download --dest="dist/" wheel-stub
+          ls -la dist/
+      - name: Install arm-none-eabi-gcc-toolchain from source distribution
+        if: ${{ matrix.python != '3.6' && matrix.python != '3.7' }}
+        shell: bash
+        run: PIP_FIND_LINKS=dist/ pip install --no-cache --no-index --no-binary="arm-none-eabi-gcc-toolchain" arm-none-eabi-gcc-toolchain
+      - name: Verify GCC Installation
+        if: ${{ matrix.python != '3.6' && matrix.python != '3.7' }}
+        run: arm-none-eabi-gcc --version
+
+      - name: Build simple blinky project again
+        if: ${{ matrix.python != '3.6' && matrix.python != '3.7' }}
+        working-directory: ./stm32f103/blink1/
+        run: |
+          make clean
+          make all
+
 
   release:
-    needs: ["setup-matrix", "test-wheels"]
-    name: Release on workflow dispatch
+    needs: ["setup-matrix", "test"]
+    name: Release (manual trigger)
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-22.04
     strategy:
@@ -167,7 +197,9 @@ jobs:
         with:
           python-version: "3.11"
           cache: "pip"
-      - run: pip install -r requirements.txt
+        env:
+          PIP_DISABLE_PIP_VERSION_CHECK: 1
+      - run: pip install -r requirements.txt --disable-pip-version-check
 
       - name: Get the package version
         id: get_version
@@ -198,6 +230,6 @@ jobs:
 
   update-simple-repository:
     needs: release
-    name: Update repo on manual trigger
+    name: Update repo (manual trigger)
     if: github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/publish_repository.yml
