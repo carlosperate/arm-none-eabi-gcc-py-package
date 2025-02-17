@@ -5,23 +5,19 @@ on:
     types: published
 
 jobs:
+  update-simple-repository:
+    name: Update package repository
+    uses: ./.github/workflows/publish_repository.yml
+
+
   test-release:
+    needs: update-simple-repository
     strategy:
       matrix:
         # macOS 13 is x86_64 and macOS 14 is arm64
         os: [ubuntu-20.04, ubuntu-22.04-arm, macos-13, macos-14, windows-2019]
-        python: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
-        exclude:
-          # macOS arm64 only has Python 3.8+
-          - os: macos-14
-            python: "3.6"
-          - os: macos-14
-            python: "3.7"
-          # Ubuntu aarch64 only has Python 3.8+
-          - os: ubuntu-22.04-arm
-            python: "3.6"
-          - os: ubuntu-22.04-arm
-            python: "3.7"
+        # Source distribution dependency wheel-stub is Python 3.8+
+        python: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
       fail-fast: false
     runs-on: ${{ matrix.os }}
     name: "Test ${{ matrix.os }} - Py ${{ matrix.python }}"
@@ -51,13 +47,13 @@ jobs:
         with:
           python-version: "${{ matrix.python }}"
 
-      - name: Download GH Release wheels
+      - name: Download GH Release source distribution
         if: steps.test_this_platform.outputs.run == 'true'
         shell: bash
         run: |
-          mkdir wheels
-          gh release download ${{ steps.get_tag.outputs.tag }} --repo ${{ github.server_url }}/${{ github.repository }} --dir wheels --pattern "*.whl"
-          ls -la wheels
+          mkdir dist
+          gh release download ${{ steps.get_tag.outputs.tag }} --repo ${{ github.server_url }}/${{ github.repository }} --dir dist --pattern "arm_none_eabi_gcc_toolchain-*.tar.gz"
+          ls -la dist
         env:
           GH_TOKEN: ${{ github.token }}
 
@@ -71,13 +67,18 @@ jobs:
             exit 0
           fi
 
-      - name: Install arm-none-eabi-gcc-toolchain from wheels
-        if: steps.test_this_platform.outputs.run == 'true'
-        run: pip install --no-index --find-links=wheels/ arm-none-eabi-gcc-toolchain
-
       #- name: Setup tmate session
       #  uses: mxschmitt/action-tmate@v3
 
+      - name: Download wheel-stub wheel dependency
+        if: ${{ matrix.python != '3.6' && matrix.python != '3.7' }}
+        shell: bash
+        run: |
+          pip download --dest="dist/" wheel-stub
+          ls -la dist/
+      - name: Install arm-none-eabi-gcc-toolchain source distribution
+        if: steps.test_this_platform.outputs.run == 'true'
+        run: pip install --no-cache --no-index --find-links=dist/ --no-binary="arm-none-eabi-gcc-toolchain" arm-none-eabi-gcc-toolchain
       - name: Verify GCC Installation
         if: steps.test_this_platform.outputs.run == 'true'
         run: arm-none-eabi-gcc --version

@@ -144,42 +144,6 @@ jobs:
         working-directory: ./stm32f103/blink1/
         run: make all
 
-      # The following steps test the source distribution
-      # wheel-stub is Python 3.8+, so only run the steps for those versions
-      - name: Uninstall arm-none-eabi-gcc-toolchain
-        if: ${{ matrix.python != '3.6' && matrix.python != '3.7' }}
-        run: pip uninstall -y arm-none-eabi-gcc-toolchain
-      - name: Check arm-none-eabi-gcc it's no longer available
-        if: ${{ matrix.python != '3.6' && matrix.python != '3.7' }}
-        shell: bash
-        run: |
-          if arm-none-eabi-gcc --version; then
-            exit 1
-          else
-            exit 0
-          fi
-
-      - name: Download wheel-stub wheel dependency
-        if: ${{ matrix.python != '3.6' && matrix.python != '3.7' }}
-        shell: bash
-        run: |
-          pip download --dest="dist/" wheel-stub
-          ls -la dist/
-      - name: Install arm-none-eabi-gcc-toolchain from source distribution
-        if: ${{ matrix.python != '3.6' && matrix.python != '3.7' }}
-        shell: bash
-        run: PIP_FIND_LINKS=dist/ pip install --no-cache --no-index --no-binary="arm-none-eabi-gcc-toolchain" arm-none-eabi-gcc-toolchain
-      - name: Verify GCC Installation
-        if: ${{ matrix.python != '3.6' && matrix.python != '3.7' }}
-        run: arm-none-eabi-gcc --version
-
-      - name: Build simple blinky project again
-        if: ${{ matrix.python != '3.6' && matrix.python != '3.7' }}
-        working-directory: ./stm32f103/blink1/
-        run: |
-          make clean
-          make all
-
 
   release:
     needs: ["setup-matrix", "test"]
@@ -220,16 +184,9 @@ jobs:
         with:
           tag: v${{ steps.get_version.outputs.version }}
           name: Release v${{ steps.get_version.outputs.version }}
-          # body: ${{ matrix.gcc }}
+          body: "With GCC ${{ matrix.gcc }}"
           commit: ${{ github.sha }}
           skipIfReleaseExists: true
           replacesArtifacts: false
           artifacts: "dist/*.whl, dist/*.whl.metadata, dist/*.sha256, dist/*.tar.gz"
           token: ${{ secrets.GH_TOKEN }}
-
-
-  update-simple-repository:
-    needs: release
-    name: Update repo (manual trigger)
-    if: github.event_name == 'workflow_dispatch'
-    uses: ./.github/workflows/publish_repository.yml
