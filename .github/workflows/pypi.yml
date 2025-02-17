@@ -9,12 +9,18 @@ jobs:
     strategy:
       matrix:
         # macOS 13 is x86_64 and macOS 14 is arm64
-        os: [ubuntu-20.04, macos-13, macos-14, windows-2019]
+        os: [ubuntu-20.04, ubuntu-22.04-arm, macos-13, macos-14, windows-2019]
         python: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
         exclude:
+          # macOS arm64 only has Python 3.8+
           - os: macos-14
             python: "3.6"
           - os: macos-14
+            python: "3.7"
+          # Ubuntu aarch64 only has Python 3.8+
+          - os: ubuntu-22.04-arm
+            python: "3.6"
+          - os: ubuntu-22.04-arm
             python: "3.7"
       fail-fast: false
     runs-on: ${{ matrix.os }}

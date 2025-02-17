@@ -52,7 +52,7 @@ Everything else should happen automatically.
                        │                 │                     
 ```
 
-## Build source distribution
+## Manual build source distribution
 
 ```bash
 cd arm-none-eabi-gcc-toolchain-pypi
