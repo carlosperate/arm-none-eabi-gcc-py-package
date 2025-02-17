@@ -113,7 +113,7 @@ GCC version and the `package_creator` versions together, where:
 ```
 
 This allows version locking to a specific GCC version and be able to fetch the
-released created with the latest `package_creator`,
+releases created with the latest `package_creator`,
 which might include bug fixes in the packaging, e.g. `~=13.3`/`==13.3.*`.
 
 ## But why?
@@ -121,16 +121,18 @@ which might include bug fixes in the packaging, e.g. `~=13.3`/`==13.3.*`.
 <img src="https://github.com/user-attachments/assets/86be2c45-f2e5-4f01-9fc6-c3a6f9c040e0" alt="But Why meme" align="right" width="15%">
 
 With tools like CMake and Ninja already available via PyPI, this package
-adds to the ecosystem a compiler for embedded development, making it possible
-to manage embedded project tooling entirely through Python packaging.
+adds to the ecosystem a compiler for embedded development.
+This makes it possible to manage embedded project tooling entirely
+through Python packaging.
 
 And while Python packaging is far from perfect, it provides some advantages:
 
 - If your project already uses Python you can manage the toolchain alongside
   other project dependencies
 - You can lock a specific toolchain version to the project requirements
-- Easily install or update the toolchain via pip/pipx/uv, without relying on
-  the tool version being available in the OS package manager
+- Easily install or update the toolchain via
+  pip/[pipx](https://pipx.pypa.io)/[uv](https://docs.astral.sh/uv/concepts/tools/),
+  without relying on the tool version being available in the OS package manager
     - It can sometimes be challenging to get an older versions of a tool in
       a recent OS release, or a newer version in old OS release
 - Leverage Python virtual environments to manage different toolchain versions
@@ -153,11 +155,11 @@ this package creation and distribution:
    to create a source distribution to be published to PyPI.
    When this package is installed from PyPI via pip, wheel-stub downloads and
    installs the platform-specific wheels from this project package repository.
-- `tools_src`: Contains the Python scripts used mainly for two purposes.
-    - `package_creator`: Generates the complete `arm-none-eabi-gcc-toolchain`
+- `tools_src`: Contains the Python scripts invoked via `tools.py` CLI tool.
+    - `package-creator`: Generates the complete `arm-none-eabi-gcc-toolchain`
       package files, builds the wheels, and generates the PyPI source
-      distribution (all are uploaded to GH releases via CI).
-    - `simple_repository_generator`: Generates the static HTML pages for a
+      distribution (CI can build these and upload them to GH Releases).
+    - `repo-generator`: Generates the static HTML pages for a
       [PEP 503](https://peps.python.org/pep-0503/) Python simple package
       repository, which links to the wheels stored in this repo GH Releases.
       This repository is published to GH Pages via CI.
@@ -176,10 +178,18 @@ pip install -r requirements.txt
 
 The scripts in the `tools_src` folder download the Arm GCC release,
 extracts it within the `arm-none-eabi-gcc-toolchain` package folder, creates
-the additional Python files required for the package, and builds it in the
+the additional Python files required for the package, and builds it in
 a `dist` folder in the project root directory.
 
 Run the builder:
+
+```bash
+python tools.py package-creator <name_of_release>
+```
+
+```bash
+python tools.py package-creator <name_of_release> --all
+```
 
 ```bash
 python tools.py package-creator <name_of_release> --os <operating system> --arch <cpu architecture>
@@ -189,8 +199,9 @@ The first argument (shown as `<name_of_release>`) is the GCC release name as
 shown in the [versions section](#versions-and-platforms).
 
 All flags are optional, `all` builds wheels for all platforms.
-The `os` and `arch` specify a platform version of the package,
-both or neither must be used.
+The `os` and `arch` (both or neither must be used) specify a platform version
+of the package.
+
 - `--os`: `linux`, `mac`, or `win`
 - `--arch`: `x86_64` or `aarch64`/`arm64`
 
@@ -206,7 +217,7 @@ The `package_creator` command will automatically create the source distribution
 
 ### Building the Simple Repository
 
-The `repo-generate` command generates a [PEP 503](https://peps.python.org/pep-0503/),
+The `repo-generator` command generates a [PEP 503](https://peps.python.org/pep-0503/),
 [PEP 629](https://peps.python.org/pep-0629/), [PEP 658](https://peps.python.org/pep-0658/),
 and [PEP 714](https://peps.python.org/pep-0714/) compliant static HTML Python
 package repository, which points to the wheels
@@ -217,7 +228,7 @@ This package repository does **not** implement
 To generate the HTML output, run the following command:
 
 ```bash
-python tools.py repo-generate
+python tools.py repo-generator
 ```
 
 ## License

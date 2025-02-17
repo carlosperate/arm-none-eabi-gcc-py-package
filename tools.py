@@ -182,7 +182,7 @@ def package_creator(
 @app.command()
 def package_get_version(gcc_release_name: str):
     """
-    Get the package version string for the specified GCC release.
+    Retrieve the package version string for the specified GCC release.
     """
     # Check the release name exists (all releases have win version), but ignore result
     _ = pc.get_gcc_releases(gcc_release_name, ("win", "x86_64"))
@@ -193,7 +193,7 @@ def package_get_version(gcc_release_name: str):
 @app.command()
 def package_versions():
     """
-    Get the GCC version strings for all available releases.
+    Get a list of GCC version strings for all available releases.
     """
     releases = pc.get_gcc_release_names()
     print(f'["{releases[0]}"', end="")
@@ -205,7 +205,7 @@ def package_versions():
 
 
 @app.command()
-def repo_generate(
+def repo_generator(
     repo: Annotated[Optional[str], typer.Option()] = SIMPLE_REPO_DEFAULT_GH_REPO,
     output: Annotated[Optional[Path], typer.Option()] = SIMPLE_REPO_DEFAULT_OP_PATH,
     overwrite: bool = True,
