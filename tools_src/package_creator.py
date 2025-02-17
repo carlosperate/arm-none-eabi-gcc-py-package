@@ -117,6 +117,15 @@ def get_gcc_releases(
     ]
 
 
+def get_gcc_release_names() -> List[str]:
+    """
+    Get the list of available GCC release names.
+
+    :return: List of GCC release names.
+    """
+    return list(gcc_releases.keys())
+
+
 def download_toolchain(file_url: str, save_path: Path = Path.cwd()) -> Path:
     """
     Download the toolchain from the given URL into the given path.
