@@ -20,7 +20,7 @@ jobs:
         python: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
       fail-fast: false
     runs-on: ${{ matrix.os }}
-    name: "Test ${{ matrix.os }} - Py ${{ matrix.python }}"
+    name: "🧪 ${{ matrix.os }} - Py ${{ matrix.python }}"
     steps:
       - name: Set the GH Release tag to step output
         id: get_tag
@@ -96,9 +96,9 @@ jobs:
         run: make all
 
 
-  publish-pypi:
+  publish-test-pypi:
     needs: test-release
-    name: Publish to PyPI 📦
+    name: 📦 Publish to Test PyPI
     runs-on: ubuntu-20.04
     environment:
       # Need to configure this when ready
@@ -130,3 +130,73 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
+
+
+  install-from-test-pypi:
+    needs: publish-test-pypi
+    strategy:
+      matrix:
+        # macOS 13 is x86_64 and macOS 14 is arm64
+        os: [ubuntu-20.04, ubuntu-22.04-arm, macos-13, macos-14, windows-2019]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    name: "⤵️ Test PyPI ${{ matrix.os }}"
+    steps:
+      - name: Set the GH Release tag to step output
+        id: get_tag
+        run: |
+          tag=${GITHUB_REF#refs/*/}
+          echo "tag=$tag"
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+          package_ver=${tag#v}
+          echo "package_ver=$package_ver"
+          echo "package_ver=$package_ver" >> $GITHUB_OUTPUT
+
+      - name: Checkout the project in a subdirectory
+        uses: actions/checkout@v4
+        with:
+          path: "project"
+
+      - name: Set up Python
+        if: steps.test_this_platform.outputs.run == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.8"
+
+      # macOS arm64 only has GCC releases from 12.2.Rel1
+      - name: Determine if the rest of the workflow should run
+        id: test_this_platform
+        shell: bash
+        working-directory: project/.github/workflows/
+        run: |
+          echo "run=$(python is_compat_platform.py ${{ steps.get_tag.outputs.tag }})"
+          echo "run=$(python is_compat_platform.py ${{ steps.get_tag.outputs.tag }})" >> $GITHUB_OUTPUT
+
+      - name: Verify GCC arm-none-eabi is not present yet
+        if: steps.test_this_platform.outputs.run == 'true'
+        shell: bash
+        run: |
+          if arm-none-eabi-gcc --version; then
+            exit 1
+          else
+            exit 0
+          fi
+
+      - name: Install arm-none-eabi-gcc-toolchain from Test PyPI
+        if: steps.test_this_platform.outputs.run == 'true'
+        run: pip install arm-none-eabi-gcc-toolchain==${{ steps.get_tag.outputs.package_ver }} --index-url https://test.pypi.org/simple/
+      - name: Verify GCC Installation
+        if: steps.test_this_platform.outputs.run == 'true'
+        run: arm-none-eabi-gcc --version
+
+      - name: Clone STM32 project
+        if: steps.test_this_platform.outputs.run == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: 'trebisky/stm32f103'
+          ref: 7cfe5feaf02c653352331374d2ad178eb04efde7
+          path: 'stm32f103/'
+      - name: Build simple blinky project
+        if: steps.test_this_platform.outputs.run == 'true'
+        working-directory: ./stm32f103/blink1/
+        run: make all
