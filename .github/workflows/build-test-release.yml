@@ -4,6 +4,7 @@ on: [push, pull_request, workflow_dispatch]
 
 jobs:
   setup-matrix:
+    name: 🕸️ Setup GCC matrix
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
@@ -27,7 +28,7 @@ jobs:
       matrix:
         gcc: ${{ fromJSON(needs.setup-matrix.outputs.matrix) }}
       fail-fast: false
-    name: Build ${{ matrix.gcc }}
+    name: 🏗️ Build ${{ matrix.gcc }}
     steps:
       - uses: actions/checkout@v4
 
@@ -103,7 +104,7 @@ jobs:
             gcc: "13.3.Rel1"
       fail-fast: false
     runs-on: ${{ matrix.os }}
-    name: "T: ${{ matrix.gcc }} Py${{ matrix.python }} ${{ matrix.os }}"
+    name: "🧪 ${{ matrix.gcc }} Py${{ matrix.python }} ${{ matrix.os }}"
     steps:
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -147,7 +148,7 @@ jobs:
 
   release:
     needs: ["setup-matrix", "test"]
-    name: Release (manual trigger)
+    name: 🆕 Release (manual trigger)
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-22.04
     strategy:
@@ -189,4 +190,5 @@ jobs:
           skipIfReleaseExists: true
           replacesArtifacts: false
           artifacts: "dist/*.whl, dist/*.whl.metadata, dist/*.sha256, dist/*.tar.gz"
+          artifactErrorsFailBuild: true
           token: ${{ secrets.GH_TOKEN }}

@@ -107,7 +107,7 @@ jobs:
           echo "run=$(python is_compat_platform.py ${{ steps.get_tag.outputs.tag }})"
           echo "run=$(python is_compat_platform.py ${{ steps.get_tag.outputs.tag }})" >> $GITHUB_OUTPUT
 
-      - name: Generate the Python package version from the GCC version 
+      - name: Generate the Python package version from the GCC version
         id: py_package_version
         shell: bash
         working-directory: project
