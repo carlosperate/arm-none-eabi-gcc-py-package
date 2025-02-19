@@ -148,7 +148,7 @@ jobs:
 
   release:
     needs: ["setup-matrix", "test"]
-    name: 🆕 Release (manual trigger)
+    name: 🆕 Release
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-22.04
     strategy:

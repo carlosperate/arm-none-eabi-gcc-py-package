@@ -26,6 +26,7 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://github.com/carlosperate/arm-none-eabi-gcc-py-package"
+Documentation = "https://github.com/carlosperate/arm-none-eabi-gcc-py-package"
 Repository = "https://github.com/carlosperate/arm-none-eabi-gcc-py-package.git"
 Issues = "https://github.com/carlosperate/arm-none-eabi-gcc-py-package/issues"
 
