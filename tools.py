@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*-
 import shutil
 import itertools
+import platform as p
 from pathlib import Path
 from typing import Optional
 
@@ -192,6 +193,26 @@ def package_get_version(gcc_release_name: str):
 
 @app.command()
 def package_versions():
+    """
+    Get a list of package version strings for all available releases.
+    Only the available releases for the platform running this script.
+    """
+    # macOS arm64 is only supported from GCC 12
+    macOS_arm = 'darwin' in p.system().lower() and 'arm' in p.processor().lower()
+    releases = pc.get_gcc_release_names()
+    print(f'["{pc.generate_package_version(releases[0])}"', end="")
+    for release in releases[1:]:
+        package_ver = pc.generate_package_version(release)
+        if macOS_arm and int(package_ver.split(".")[0]) < 12:
+            continue
+        print(f', "{package_ver}"', end="")
+    print("]")
+    # This is used only to experiment with CI and have fewer jobs running
+    # print('["13.3.0", "13.2.0", "12.3.0", "9.2.0"]')
+
+
+@app.command()
+def package_gcc_versions():
     """
     Get a list of GCC version strings for all available releases.
     """

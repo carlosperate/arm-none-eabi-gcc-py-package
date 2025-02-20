@@ -16,9 +16,9 @@ jobs:
           python-version: "3.11"
           cache: "pip"
       - run: pip install -r requirements.txt --disable-pip-version-check
-      - run: echo "matrix=$(python tools.py package-versions)"
+      - run: echo "matrix=$(python tools.py package-gcc-versions)"
       - id: set-matrix
-        run: echo "matrix=$(python tools.py package-versions)" >> $GITHUB_OUTPUT
+        run: echo "matrix=$(python tools.py package-gcc-versions)" >> $GITHUB_OUTPUT
 
 
   build:
