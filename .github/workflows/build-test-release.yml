@@ -72,6 +72,13 @@ jobs:
             python: "3.6"
           - os: ubuntu-22.04-arm
             python: "3.6"
+          # The others only need the oldest and newest Python
+          - os: ubuntu-20.04
+            python: "3.8"
+          - os: windows-2019
+            python: "3.8"
+          - os: macos-13
+            python: "3.18"
           # GCC 13+ need macOS 12+ and last pip release for Py3.6 is
           # not compatible with that wheel platform specification
           - os: macos-13
