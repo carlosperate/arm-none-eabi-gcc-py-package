@@ -83,14 +83,16 @@ jobs:
       #  uses: mxschmitt/action-tmate@v3
 
       - name: Download wheel-stub wheel dependency
-        if: ${{ matrix.python != '3.6' && matrix.python != '3.7' }}
+        if: steps.test_this_platform.outputs.run == 'true'
         shell: bash
         run: |
           pip download --dest="dist/" wheel-stub
           ls -la dist/
       - name: Install arm-none-eabi-gcc-toolchain source distribution
         if: steps.test_this_platform.outputs.run == 'true'
-        run: pip install --no-cache --no-index --find-links=dist/ --no-binary="arm-none-eabi-gcc-toolchain" arm-none-eabi-gcc-toolchain
+        # TODO: A workaround for installing a forked wheel-stub use PyPI index as well
+        # run: pip install --no-cache --no-index --find-links=dist/ --no-binary="arm-none-eabi-gcc-toolchain" arm-none-eabi-gcc-toolchain
+        run:   pip install --no-cache            --find-links=dist/ --no-binary="arm-none-eabi-gcc-toolchain" arm-none-eabi-gcc-toolchain
       - name: Verify GCC Installation
         if: steps.test_this_platform.outputs.run == 'true'
         run: arm-none-eabi-gcc --version

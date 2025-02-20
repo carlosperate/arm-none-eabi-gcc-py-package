@@ -1,5 +1,9 @@
 [build-system]
-requires = ["wheel-stub >= 0.4.0"]
+# Temporarily use my fork until fixes are included upstream
+# https://github.com/wheelnext/wheel-stub/issues/22
+# requires = ["wheel-stub >= 0.4.2"]
+requires = ["wheel-stub @ git+https://github.com/carlosperate/wheel-stub@fix/pkg-info-encoding"]
+
 build-backend = "wheel_stub.buildapi"
 
 [tool.wheel_stub]
