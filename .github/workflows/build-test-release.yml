@@ -67,26 +67,22 @@ jobs:
         python: ["3.6", "3.8", "3.13"]
         gcc: ${{ fromJSON(needs.setup-matrix.outputs.matrix) }}
         exclude:
-          # macOS arm64 and Ubuntu aarch64 only has Python 3.8+
+          # macOS arm64 and Ubuntu aarch64 only have Python 3.8+
           - os: macos-14
             python: "3.6"
           - os: ubuntu-22.04-arm
             python: "3.6"
-          # The others only need the oldest and newest Python
+          # GCC 13+ needs macOS 12+ and last pip release for Py3.6 is
+          # not compatible with that wheel platform specification
+          - os: macos-13
+            python: "3.6"
+          # The other OS platforms only need the oldest and newest Python
           - os: ubuntu-20.04
             python: "3.8"
           - os: windows-2019
             python: "3.8"
           - os: macos-13
             python: "3.8"
-          # GCC 13+ need macOS 12+ and last pip release for Py3.6 is
-          # not compatible with that wheel platform specification
-          - os: macos-13
-            python: "3.6"
-            gcc: "13.2.Rel1"
-          - os: macos-13
-            python: "3.6"
-            gcc: "13.3.Rel1"
           # arm64 macOS first compatible GCC release is 12.2.Rel1
           - os: macos-14
             gcc: "11.3.Rel1"
@@ -100,15 +96,6 @@ jobs:
             gcc: "9-2020-q2"
           - os: macos-14
             gcc: "9-2019-q4"
-        include:
-          # GCC 13+ need macOS 12+ and last pip release for Py3.6 is
-          # not compatible with that wheel platform specification
-          - os: macos-13
-            python: "3.7"
-            gcc: "13.2.Rel1"
-          - os: macos-13
-            python: "3.7"
-            gcc: "13.3.Rel1"
       fail-fast: false
     runs-on: ${{ matrix.os }}
     name: "🧪 ${{ matrix.gcc }} Py${{ matrix.python }} ${{ matrix.os }}"
@@ -138,7 +125,7 @@ jobs:
           fi
 
       - name: Install arm-none-eabi-gcc-toolchain wheel
-        run: pip install --only-binary=":all:" --no-index --find-links=dist/ arm-none-eabi-gcc-toolchain
+        run: pip install --no-cache --only-binary=":all:" --no-index --find-links=dist/ arm-none-eabi-gcc-toolchain
       - name: Verify GCC Installation
         run: arm-none-eabi-gcc --version
 
@@ -155,13 +142,13 @@ jobs:
 
   release:
     needs: ["setup-matrix", "test"]
-    name: 🆕 Release
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-22.04
     strategy:
       matrix:
         gcc: ${{ fromJSON(needs.setup-matrix.outputs.matrix) }}
       fail-fast: false
+    name: 🆕 Release (${{ matrix.gcc }})
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
