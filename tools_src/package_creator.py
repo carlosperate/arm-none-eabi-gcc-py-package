@@ -26,7 +26,7 @@ from tools_src.gcc_releases import gcc_releases, gcc_short_versions
 
 # The project README contains information about the versioning
 # and this version string should always be single increasing integer.
-PACKAGE_CREATOR_VERSION = "0"
+PACKAGE_CREATOR_VERSION = "1"
 PROJECT_NAME = "arm-none-eabi-gcc-toolchain"
 PACKAGE_NAME = "arm_none_eabi_gcc_toolchain"
 PACKAGE_ROOT = Path(__file__).resolve().parents[1] / PROJECT_NAME

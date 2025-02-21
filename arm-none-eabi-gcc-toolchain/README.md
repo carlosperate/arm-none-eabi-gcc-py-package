@@ -16,6 +16,15 @@ install command needs the "extra index URL" flag:
 pip install --extra-index-url https://test.pypi.org/simple/ arm-none-eabi-gcc-toolchain
 ```
 
+Because the Python wheels containing the toolchain are larger than the default
+maximum size allowed by PyPI, a source distribution is provided instead.
+
+When pip installs this source distribution, it uses
+[wheel-stub](https://github.com/wheel-next/wheel-stub) as its build backend to
+download and install the correct wheel from an external Python Package
+Repository set up for this purpose:
+https://carlosperate.github.io/arm-none-eabi-gcc-py-package/
+
 ## Versions and platforms
 
 | Package Version | GCC Version  | Win x86_64 | Linux x86_64 | Linux aarch64 | macOS x86_64 | macOS arm64 |
