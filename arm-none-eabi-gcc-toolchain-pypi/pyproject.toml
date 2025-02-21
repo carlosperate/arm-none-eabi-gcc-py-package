@@ -10,4 +10,5 @@ build-backend = "wheel_stub.buildapi"
 index_url = "https://carlosperate.github.io/arm-none-eabi-gcc-py-package/"
 
 [project]
-requires-python = ">=3.6"
+# This minimum Python version comes from wheel-stub
+requires-python = ">=3.8"

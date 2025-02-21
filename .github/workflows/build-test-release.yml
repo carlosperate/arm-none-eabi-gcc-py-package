@@ -78,7 +78,7 @@ jobs:
           - os: windows-2019
             python: "3.8"
           - os: macos-13
-            python: "3.18"
+            python: "3.8"
           # GCC 13+ need macOS 12+ and last pip release for Py3.6 is
           # not compatible with that wheel platform specification
           - os: macos-13
