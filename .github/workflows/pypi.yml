@@ -158,6 +158,7 @@ jobs:
     steps:
       - name: Set the GH Release tag to step output
         id: get_tag
+        shell: bash
         run: |
           tag=${GITHUB_REF#refs/*/}
           echo "tag=$tag"
@@ -197,9 +198,11 @@ jobs:
 
       - name: Install arm-none-eabi-gcc-toolchain from Test PyPI
         if: steps.test_this_platform.outputs.run == 'true'
-        run: 
-          pip install wheel-stub
-          pip install arm-none-eabi-gcc-toolchain==${{ steps.get_tag.outputs.package_ver }} --index-url https://test.pypi.org/simple/
+        # TODO: A workaround for installing a forked wheel-stub use PyPI index as well
+        #run: |
+        #  pip install wheel-stub
+        #  pip install arm-none-eabi-gcc-toolchain==${{ steps.get_tag.outputs.package_ver }} --index-url https://test.pypi.org/simple/
+        run: pip install arm-none-eabi-gcc-toolchain==${{ steps.get_tag.outputs.package_ver }} --extra-index-url https://test.pypi.org/simple/
       - name: Verify GCC Installation
         if: steps.test_this_platform.outputs.run == 'true'
         run: arm-none-eabi-gcc --version
