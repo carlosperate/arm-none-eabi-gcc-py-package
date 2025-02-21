@@ -83,18 +83,18 @@ $ arm-none-eabi-<tab>
 
 ## Versions and platforms
 
-| GCC Version  | Python Package Version | Win x86_64 | Linux x86_64 | Linux aarch64 |  macOS x86_64 | macOS arm64 |
-|--------------|------------------------|------------|--------------|---------------|---------------|-------------|
-| 13.3.Rel1    | 13.3.*                 | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 13.2.Rel1    | 13.2.*                 | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 12.3.Rel1    | 12.3.*                 | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 12.2.Rel1    | 12.2.*                 | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 11.3.Rel1    | 11.3.*                 | ✅ | ✅ | ✅ | ✅ | ❌ |
-| 11.2-2022.02 | 11.2.*                 | ✅ | ✅ | ✅ | ✅ | ❌ |
-| 10.3-2021.10 | 10.3.*                 | ✅ | ✅ | ✅ | ✅ | ❌ |
-| 10-2020-q4   | 10.2.*                 | ✅ | ✅ | ✅ | ✅ | ❌ |
-| 9-2020-q2    | 9.3.*                  | ✅ | ✅ | ✅ | ✅ | ❌ |
-| 9-2019-q4    | 9.2.*                  | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Package Version | GCC Version  | Win x86_64 | Linux x86_64 | Linux aarch64 | macOS x86_64 | macOS arm64 |
+|-----------------|--------------|------------|--------------|---------------|--------------|-------------|
+| 13.3.*          | 13.3.Rel1    | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 13.2.*          | 13.2.Rel1    | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 12.3.*          | 12.3.Rel1    | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 12.2.*          | 12.2.Rel1    | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 11.3.*          | 11.3.Rel1    | ✅ | ✅ | ✅ | ✅ | ❌ |
+| 11.2.*          | 11.2-2022.02 | ✅ | ✅ | ✅ | ✅ | ❌ |
+| 10.3.*          | 10.3-2021.10 | ✅ | ✅ | ✅ | ✅ | ❌ |
+| 10.2.*          | 10-2020-q4   | ✅ | ✅ | ✅ | ✅ | ❌ |
+| 9.3.*           | 9-2020-q2    | ✅ | ✅ | ✅ | ✅ | ❌ |
+| 9.2.*           | 9-2019-q4    | ✅ | ✅ | ✅ | ✅ | ❌ |
 
 ### Versioning scheme
 
@@ -114,7 +114,7 @@ GCC version and the `package_creator` versions together, where:
 
 This allows version locking to a specific GCC version and be able to fetch the
 releases created with the latest `package_creator`,
-which might include bug fixes in the packaging, e.g. `~=13.3`/`==13.3.*`.
+which might include bug fixes in the packaging, e.g. `~=13.3.1` or `==13.3.*`.
 
 ## But why?
 

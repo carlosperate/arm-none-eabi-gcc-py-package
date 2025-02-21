@@ -18,23 +18,39 @@ pip install --extra-index-url https://test.pypi.org/simple/ arm-none-eabi-gcc-to
 
 ## Versions and platforms
 
-| GCC Version  | Python Package Version | Win x86_64 | Linux x86_64 | Linux aarch64 |  macOS x86_64 | macOS arm64 |
-|--------------|------------------------|------------|--------------|---------------|---------------|-------------|
-| 13.3.Rel1    | 13.3.*                 | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 13.2.Rel1    | 13.2.*                 | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 12.3.Rel1    | 12.3.*                 | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 12.2.Rel1    | 12.2.*                 | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 11.3.Rel1    | 11.3.*                 | ✅ | ✅ | ✅ | ✅ | ❌ |
-| 11.2-2022.02 | 11.2.*                 | ✅ | ✅ | ✅ | ✅ | ❌ |
-| 10.3-2021.10 | 10.3.*                 | ✅ | ✅ | ✅ | ✅ | ❌ |
-| 10-2020-q4   | 10.2.*                 | ✅ | ✅ | ✅ | ✅ | ❌ |
-| 9-2020-q2    | 9.3.*                  | ✅ | ✅ | ✅ | ✅ | ❌ |
-| 9-2019-q4    | 9.2.*                  | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Package Version | GCC Version  | Win x86_64 | Linux x86_64 | Linux aarch64 | macOS x86_64 | macOS arm64 |
+|-----------------|--------------|------------|--------------|---------------|--------------|-------------|
+| 13.3.*          | 13.3.Rel1    | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 13.2.*          | 13.2.Rel1    | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 12.3.*          | 12.3.Rel1    | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 12.2.*          | 12.2.Rel1    | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 11.3.*          | 11.3.Rel1    | ✅ | ✅ | ✅ | ✅ | ❌ |
+| 11.2.*          | 11.2-2022.02 | ✅ | ✅ | ✅ | ✅ | ❌ |
+| 10.3.*          | 10.3-2021.10 | ✅ | ✅ | ✅ | ✅ | ❌ |
+| 10.2.*          | 10-2020-q4   | ✅ | ✅ | ✅ | ✅ | ❌ |
+| 9.3.*           | 9-2020-q2    | ✅ | ✅ | ✅ | ✅ | ❌ |
+| 9.2.*           | 9-2019-q4    | ✅ | ✅ | ✅ | ✅ | ❌ |
+
+The package version follows `MAJOR.MINOR.PATCH` format, but it combines the
+GCC Toolchain version and the `packaging` versions together, where:
+- MAJOR version is the GCC major version
+- MINOR version is the GCC minor version
+- PATCH version is a single number indicating the version of the packaging
+  code used to create the package
+
+```
+13 . 3 . 1
+└──┬──┘ └┬┘
+   │     └──── package_creator version
+   └────────── GCC major.minor version
+```
+
+This allows version locking to a specific GCC version and be able to fetch the
+releases created with the latest packaging, e.g. `~=13.3.1` or `==13.3.*`.
 
 ## License
 
-All the source code to create this Python package is licensed under the
-MIT license.
+The source code to create this Python package is licensed under MIT license.
 
-The generated wheels contain the GNU Arm Embedded Toolchain, licensed under
+The GNU Arm Embedded Toolchain included in the package is licensed under
 the GPL v3 license.
