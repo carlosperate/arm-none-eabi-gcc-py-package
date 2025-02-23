@@ -60,7 +60,8 @@ def get_gh_releases_wheel_urls(
                                 f"{sha256_file_contents}\n"
                                 f"{wheel_sha256}"
                             )
-                        print(f"\tFound wheel SHA-256 ({wheel_sha256}) in\n\t\t{asset.name}")
+                        print(f"\tFound wheel SHA-256 ({wheel_sha256}) in\n")
+                        print(f"\t\t{asset.name}")
                 elif asset.name == f"{asset_wheel.name}.metadata":
                     # Ensure the URL is the same as the wheel URL + ".metadata" extension
                     if (
@@ -164,6 +165,9 @@ def gen_repo_html(packages: Dict[str, Dict[str, List[WheelData]]], output: Path)
         f.write('\t<title>Simple Index</title>\n\t<meta charset="UTF-8" />\n')
         f.write("</head>\n")
         f.write("<body>\n\t")
+        f.write("<h1>GNU Arm Embedded Toolchain Python Package Repository</h1>\n\t")
+        f.write("<p>This repository has been created to host the wheels wrapping ")
+        f.write("the arm-none-eabi-gcc toolchain into a Python package.</p>\n\t")
         f.write("\n\t".join(package_links))
         f.write("\n</body>\n</html>\n")
 
