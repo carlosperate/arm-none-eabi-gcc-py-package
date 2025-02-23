@@ -81,8 +81,6 @@ jobs:
             python: "3.8"
           - os: windows-2019
             python: "3.8"
-          - os: macos-13
-            python: "3.8"
           # arm64 macOS first compatible GCC release is 12.2.Rel1
           - os: macos-14
             gcc: "11.3.Rel1"
