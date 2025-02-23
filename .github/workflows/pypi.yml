@@ -5,25 +5,18 @@ on:
     types: published
 
 jobs:
-  wait-for-release:
-    name: ⏳ Wait for GH Release uploads
+  wait-for-repository:
+    name: ⏳ Wait for package repo deployment
     runs-on: ubuntu-latest
     steps:
-        # This a hacky workaround to having to wait for the previous workflow
-        # finish uploading the artifact to the release, otherwise the generated
-        # Python package repository will not link all the files.
-      - name: Wait 5 min for the release workflow to finish
-        run: sleep 300
-
-
-  update-simple-repository:
-    needs: wait-for-release
-    name: Update package repository
-    uses: ./.github/workflows/publish_repository.yml
+        # There is already a hacky 5 min wait before the  package repository
+        # deployment workflow, this also add extra time to let that finish.
+      - name: Wait 10 min for the release workflow to finish
+        run: sleep 6000
 
 
   test-release:
-    needs: update-simple-repository
+    needs: wait-for-repository
     strategy:
       matrix:
         # macOS 13 is x86_64 and macOS 14 is arm64

@@ -184,3 +184,23 @@ jobs:
           artifacts: "dist/*.whl, dist/*.whl.metadata, dist/*.sha256, dist/*.tar.gz"
           artifactErrorsFailBuild: true
           token: ${{ secrets.GH_TOKEN }}
+
+
+  wait-for-release:
+    needs: "release"
+    if: github.event_name == 'workflow_dispatch'
+    name: ⏳ Wait for GH Release uploads
+    runs-on: ubuntu-latest
+    steps:
+        # This a hacky workaround to having to wait for the previous workflow
+        # finish uploading the artifact to the release, otherwise the generated
+        # Python package repository will not link all the files.
+      - name: Wait 5 min for the release workflow to finish
+        run: sleep 300
+
+
+  update-simple-repository:
+    needs: wait-for-release
+    if: github.event_name == 'workflow_dispatch'
+    name: Update package repository
+    uses: ./.github/workflows/publish_repository.yml
