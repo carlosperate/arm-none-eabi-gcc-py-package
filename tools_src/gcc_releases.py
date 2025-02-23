@@ -11,6 +11,33 @@
 # Ubuntu 18.04 -> 2.27 -> manylinux_2_27_arch
 # Ubuntu 20.04 -> 2.31 -> manylinux_2_31_arch
 gcc_releases = {
+    "14.2.Rel1": {
+        "win32": {
+            "url": "https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-mingw-w64-x86_64-arm-none-eabi.zip",
+            "md5": "7426b9eec8b576f0a524ede63013c547",
+            "wheel_plat": "win_amd64",
+        },
+        "mac_x86_64": {
+            "url": "https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-darwin-x86_64-arm-none-eabi.tar.xz",
+            "md5": "d5fb1ae60e4d67eb2986837dbcd6a066",
+            "wheel_plat": "macosx_12_0_x86_64",
+        },
+        "mac_arm64": {
+            "url": "https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-darwin-arm64-arm-none-eabi.tar.xz",
+            "md5": "40d1c9208aed7fab08b0f27e5383dcef",
+            "wheel_plat": "macosx_11_0_arm64",
+        },
+        "linux_x86_64": {
+            "url": "https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi.tar.xz",
+            "md5": "fcdcd7c8d5b22d2d0cc6bf3721686e69",
+            "wheel_plat": "manylinux_2_28_x86_64",
+        },
+        "linux_aarch64": {
+            "url": "https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-aarch64-arm-none-eabi.tar.xz",
+            "md5": "342d6d9dc75e6d4c05a748f2cecc96a6",
+            "wheel_plat": "manylinux_2_27_aarch64",
+        },
+    },
     "13.3.Rel1": {
         "win32": {
             "url": "https://developer.arm.com/-/media/Files/downloads/gnu/13.3.rel1/binrel/arm-gnu-toolchain-13.3.rel1-mingw-w64-i686-arm-none-eabi.zip",
@@ -279,6 +306,7 @@ gcc_releases = {
 }
 
 gcc_short_versions = {
+    "14.2.Rel1": "14.2",
     "13.3.Rel1": "13.3",
     "13.2.Rel1": "13.2",
     "12.3.Rel1": "12.3",

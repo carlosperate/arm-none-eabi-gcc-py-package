@@ -29,6 +29,7 @@ https://carlosperate.github.io/arm-none-eabi-gcc-py-package/
 
 | Package Version | GCC Version  | Win x86_64 | Linux x86_64 | Linux aarch64 | macOS x86_64 | macOS arm64 |
 |-----------------|--------------|------------|--------------|---------------|--------------|-------------|
+| 14.2.*          | 14.2.Rel1    | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 13.3.*          | 13.3.Rel1    | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 13.2.*          | 13.2.Rel1    | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 12.3.*          | 12.3.Rel1    | ✅ | ✅ | ✅ | ✅ | ✅ |

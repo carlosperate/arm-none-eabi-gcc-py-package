@@ -201,14 +201,18 @@ def uncompress_toolchain(file_path: Path, destination: Path = Path.cwd()) -> Pat
             )
 
     if str(file_path).endswith(".zip"):
-        # Special case the 9-2020-q2 and 9-2019-q4 windows zip because they don't have a top folder
+        # Special case the 14.2.Rel1, 9-2020-q2 and 9-2019-q4 windows zip because they don't have a top folder
         bad_zip_filename1 = os.path.basename(gcc_releases["9-2020-q2"]["win32"]["url"])
         bad_zip_filename2 = os.path.basename(gcc_releases["9-2019-q4"]["win32"]["url"])
+        bad_zip_filename3 = os.path.basename(gcc_releases["14.2.Rel1"]["win32"]["url"])
         if str(file_path).endswith(bad_zip_filename1):
             final_destination = destination / bad_zip_filename1.replace(".zip", "")
             final_destination.mkdir(exist_ok=False)
         elif str(file_path).endswith(bad_zip_filename2):
             final_destination = destination / bad_zip_filename2.replace(".zip", "")
+            final_destination.mkdir(exist_ok=False)
+        elif str(file_path).endswith(bad_zip_filename3):
+            final_destination = destination / bad_zip_filename3.replace(".zip", "")
             final_destination.mkdir(exist_ok=False)
         else:
             final_destination = destination
