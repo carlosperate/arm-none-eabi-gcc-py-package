@@ -11,8 +11,8 @@ jobs:
     steps:
         # There is already a hacky 5 min wait before the  package repository
         # deployment workflow, this also add extra time to let that finish.
-      - name: Wait 10 min for the release workflow to finish
-        run: sleep 6000
+      - name: Wait 15 min for the release workflow to finish
+        run: sleep 900
 
 
   test-release:
