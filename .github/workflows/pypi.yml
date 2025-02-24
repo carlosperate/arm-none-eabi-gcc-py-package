@@ -9,10 +9,10 @@ jobs:
     name: ⏳ Wait for package repo deployment
     runs-on: ubuntu-latest
     steps:
-        # There is already a hacky 5 min wait before the  package repository
+        # There is already a hacky 10 min wait before the  package repository
         # deployment workflow, this also add extra time to let that finish.
-      - name: Wait 10 min for the release workflow to finish
-        run: sleep 6000
+      - name: Wait 18 min for the release workflow to finish
+        run: sleep 1080
 
 
   test-release:
