@@ -4,7 +4,19 @@ These are personal notes for the development of the project.
 
 ## Adding a new GCC release
 
-TBD.
+- Add the URLs and md5 to the `gcc_releases.py` file
+- Check the release notes and ensure the added wheel platform is correct
+- Add the "short version" to `gcc_short_versions` in `gcc_releases.py` file
+- Add a new row to the release tables in both READMEs
+- The CI workflow should **not** need to be updated
+- Check if the any of the downloaded zip/tar files do not have a single root
+  directory. If any don't, add the exception to `uncompress_toolchain()`
+
+### Toolchain download locations
+
+- https://launchpad.net/gcc-arm-embedded
+- https://developer.arm.com/downloads/-/gnu-rm
+- https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads
 
 ## Pushing a new release or releases
 
@@ -23,9 +35,12 @@ Everything else should happen automatically.
 
 ```
                         │                 │                     
-       Manually         │    Triggered    │    Automatically    
+       Manually            Triggered from      Automatically    
      Triggered CI       │   GH Releases   |    triggered CI     
-                        │                 │                     
+-  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+          │             │                 │                     
+          │                                                     
+          ▼             │                 │                     
  ┌──────────────────┐                                           
  │                  │   │                 │                     
  │   Build Wheels   │                                           
