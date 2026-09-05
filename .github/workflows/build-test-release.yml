@@ -18,9 +18,9 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: "pip"
@@ -30,8 +30,28 @@ jobs:
         run: echo "matrix=$(python tools.py package-gcc-versions)" >> $GITHUB_OUTPUT
 
 
+  unit-tests:
+    name: 🔬 Unit tests (${{ matrix.os }})
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: "pip"
+        env:
+          PIP_DISABLE_PIP_VERSION_CHECK: 1
+      - run: pip install -r requirements.txt --disable-pip-version-check
+      - run: pytest
+
+
   build:
-    needs: setup-matrix
+    needs: ["setup-matrix", "unit-tests"]
     runs-on: ubuntu-22.04
     strategy:
       matrix:
@@ -39,10 +59,10 @@ jobs:
       fail-fast: false
     name: 🏗️ Build ${{ matrix.gcc }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: "pip"
@@ -57,7 +77,7 @@ jobs:
       - run: ls -la dist/
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.gcc }}
           path: dist/
@@ -71,8 +91,7 @@ jobs:
     needs: ["setup-matrix", "build"]
     strategy:
       matrix:
-        # macOS 13 is x86_64 and macOS 14 is arm64
-        os: [ubuntu-20.04, ubuntu-22.04-arm, macos-13, macos-14, windows-2019]
+        os: [ubuntu-22.04, ubuntu-22.04-arm, macos-15-intel, macos-14, windows-2019]
         python: ["3.6", "3.8", "3.13"]
         gcc: ${{ fromJSON(needs.setup-matrix.outputs.matrix) }}
         exclude:
@@ -83,10 +102,10 @@ jobs:
             python: "3.6"
           # GCC 13+ needs macOS 12+ and last pip release for Py3.6 is
           # not compatible with that wheel platform specification
-          - os: macos-13
-            python: "3.6"
+          #- os: macos-13
+          #  python: "3.6"
           # The other OS platforms only need the oldest and newest Python
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             python: "3.8"
           - os: windows-2019
             python: "3.8"
@@ -108,14 +127,14 @@ jobs:
     name: "🧪 ${{ matrix.gcc }} Py${{ matrix.python }} ${{ matrix.os }}"
     steps:
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
         env:
           PIP_DISABLE_PIP_VERSION_CHECK: 1
 
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ${{ matrix.gcc }}
           path: dist/
@@ -137,7 +156,7 @@ jobs:
         run: arm-none-eabi-gcc --version
 
       - name: Clone STM32 project
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: 'trebisky/stm32f103'
           ref: 7cfe5feaf02c653352331374d2ad178eb04efde7
@@ -157,9 +176,9 @@ jobs:
       fail-fast: false
     name: 🆕 Release (${{ matrix.gcc }})
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: "pip"
@@ -175,7 +194,7 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ${{ matrix.gcc }}
           path: dist/

@@ -43,6 +43,7 @@ def package_clean():
     ]
     folders = [
         PROJECT_ROOT / ".mypy_cache",
+        PROJECT_ROOT / ".pytest_cache",
         PACKAGE_ROOT / "build",
         PACKAGE_ROOT / "src" / f"{PACKAGE_NAME}.egg-info",
         SIMPLE_REPO_DEFAULT_OP_PATH,

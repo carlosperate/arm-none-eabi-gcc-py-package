@@ -25,6 +25,29 @@ download and install the correct wheel from an external Python Package
 Repository set up for this purpose:
 https://carlosperate.github.io/arm-none-eabi-gcc-py-package/
 
+## Using the toolchain from Python
+
+The `arm-none-eabi-*` commands on the path are small Python launchers.
+Build scripts that call the compiler many times, or that need to give CMake
+a real compiler path, can ask the package where the binaries are:
+
+```python
+import os
+import subprocess
+import arm_none_eabi_gcc_toolchain as toolchain
+
+# Path to one tool executable
+gcc = toolchain.executable("gcc")
+
+# Or put every tool on the PATH of a child process
+env = dict(os.environ)
+env["PATH"] = toolchain.bin_dir() + os.pathsep + env["PATH"]
+subprocess.run(["cmake", "-DCMAKE_C_COMPILER=" + gcc, ".."], env=env)
+```
+
+`toolchain_dir()` returns the root folder of the bundled toolchain and
+`bin_dir()` its `bin` folder, both as absolute path strings.
+
 ## Versions and platforms
 
 | Package Version | GCC Version  | Win x86_64 | Linux x86_64 | Linux aarch64 | macOS x86_64 | macOS arm64 |

@@ -7,3 +7,4 @@ typer~=0.10
 tomli~=1.2
 PyGithub>=1.56,<3
 requests~=2.27
+pytest>=8,<9

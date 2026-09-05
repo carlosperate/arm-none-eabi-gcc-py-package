@@ -31,11 +31,11 @@ package at https://carlosperate.github.io/arm-none-eabi-gcc-py-package.
 So, right now, to install the package we need to use the
 `--extra-index-url` pip install flag.
 
-Because the size of the generated wheels is larger than the default PyPI
-maximum, the [wheel-stub](https://github.com/wheel-next/wheel-stub/) project
-is used to create a source distribution that can be pushed to PyPI.
+Because these are relatively large packages and we shouldn't use PyPI to host
+arbitrary software, the [wheel-stub](https://github.com/wheel-next/wheel-stub/)
+project is used to create a small source distribution to be pushed to PyPI.
 During package installation, wheel-stub acts as a package build back-end
-that downloads the corresponding wheel from the external package repository.
+that downloads the corresponding wheel from our external package repository.
 
 This is currently tested and set up with the Test PyPI repository,
 but it has not been released yet in the real PyPI.
@@ -81,6 +81,29 @@ $ arm-none-eabi-<tab>
 …one-eabi-gdb               (command)
 ```
 
+### Using the toolchain from Python
+
+The `arm-none-eabi-*` commands on the path are small Python launchers.
+Build scripts that call the compiler many times, or that need to give CMake
+a real compiler path, can ask the package where the binaries are:
+
+```python
+import os
+import subprocess
+import arm_none_eabi_gcc_toolchain as toolchain
+
+# Path to one tool executable
+gcc = toolchain.executable("gcc")
+
+# Or put every tool on the PATH of a child process
+env = dict(os.environ)
+env["PATH"] = toolchain.bin_dir() + os.pathsep + env["PATH"]
+subprocess.run(["cmake", "-DCMAKE_C_COMPILER=" + gcc, ".."], env=env)
+```
+
+`toolchain_dir()` returns the root folder of the bundled toolchain and
+`bin_dir()` its `bin` folder, both as absolute path strings.
+
 ## Versions and platforms
 
 | Package Version | GCC Version  | Win x86_64 | Linux x86_64 | Linux aarch64 | macOS x86_64 | macOS arm64 |
@@ -121,10 +144,10 @@ which might include bug fixes in the packaging, e.g. `~=13.3.1` or `==13.3.*`.
 
 <img src="https://github.com/user-attachments/assets/86be2c45-f2e5-4f01-9fc6-c3a6f9c040e0" alt="But Why meme" align="right" width="15%">
 
-With tools like CMake and Ninja already available via PyPI, this package
+With build tools like CMake and Ninja already available via PyPI, this package
 adds to the ecosystem a compiler for embedded development.
 This makes it possible to manage embedded project tooling entirely
-through Python packaging.
+through Python packaging tools like `pip` and `uv`.
 
 And while Python packaging is far from perfect, it provides some advantages:
 
@@ -135,9 +158,9 @@ And while Python packaging is far from perfect, it provides some advantages:
   pip/[pipx](https://pipx.pypa.io)/[uv](https://docs.astral.sh/uv/concepts/tools/),
   without relying on the tool version being available in the OS package manager
     - It can sometimes be challenging to get an older versions of a tool in
-      a recent OS release, or a newer version in old OS release
-- Leverage Python virtual environments to manage different toolchain versions
-  per project on the same system
+      a recent OS release, or a newer version in an old OS release
+- You can leverage Python virtual environments to manage different toolchain
+  versions per project on the same system
 - Simplify cross-platform toolchain installation by using the same package
   manager across all platforms
     - This is also useful for CI pipelines, including matrix jobs testing
@@ -152,10 +175,10 @@ this package creation and distribution:
   package metadata and source code, the rest of the package data is generated
   by the tooling in this project.
 - `arm-none-eabi-gcc-toolchain-pypi`: Contains the files to create a secondary
-   package, which uses [wheel-stub](https://github.com/wheel-next/wheel-stub)
-   to create a source distribution to be published to PyPI.
-   When this package is installed from PyPI via pip, wheel-stub downloads and
-   installs the platform-specific wheels from this project package repository.
+  package, which uses [wheel-stub](https://github.com/wheel-next/wheel-stub)
+  to create a source distribution to be published to PyPI.
+  When this package is installed from PyPI via pip, wheel-stub downloads and
+  installs the platform-specific wheels from this project package repository.
 - `tools_src`: Contains the Python scripts invoked via `tools.py` CLI tool.
     - `package-creator`: Generates the complete `arm-none-eabi-gcc-toolchain`
       package files, builds the wheels, and generates the PyPI source
