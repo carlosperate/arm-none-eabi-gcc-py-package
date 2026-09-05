@@ -79,13 +79,13 @@ jobs:
         if: steps.test_this_platform.outputs.run == 'true'
         shell: bash
         run: |
-          pip download --dest="dist/" wheel-stub
+          # Keep in sync with build-system.requires in arm-none-eabi-gcc-toolchain-pypi/pyproject.toml
+          pip download --dest="dist/" "wheel-stub >= 0.4.2, < 1"
           ls -la dist/
       - name: Install arm-none-eabi-gcc-toolchain source distribution
         if: steps.test_this_platform.outputs.run == 'true'
-        # TODO: A workaround for installing a forked wheel-stub use PyPI index as well
-        # run: pip install --no-cache --no-index --find-links=dist/ --no-binary="arm-none-eabi-gcc-toolchain" arm-none-eabi-gcc-toolchain
-        run:   pip install --no-cache            --find-links=dist/ --no-binary="arm-none-eabi-gcc-toolchain" arm-none-eabi-gcc-toolchain
+        # --no-index proves the build needs nothing beyond dist/ and our own package repo
+        run: pip install --no-cache --no-index --find-links=dist/ --no-binary="arm-none-eabi-gcc-toolchain" arm-none-eabi-gcc-toolchain
       - name: Verify GCC Installation
         if: steps.test_this_platform.outputs.run == 'true'
         run: arm-none-eabi-gcc --version
@@ -193,10 +193,7 @@ jobs:
 
       - name: Install arm-none-eabi-gcc-toolchain from Test PyPI
         if: steps.test_this_platform.outputs.run == 'true'
-        # TODO: A workaround for installing a forked wheel-stub use PyPI index as well
-        #run: |
-        #  pip install wheel-stub
-        #  pip install arm-none-eabi-gcc-toolchain==${{ steps.get_tag.outputs.package_ver }} --no-cache --index-url https://test.pypi.org/simple/
+        # Test PyPI is an extra index because the wheel-stub build dependency lives on PyPI
         run: pip install arm-none-eabi-gcc-toolchain==${{ steps.get_tag.outputs.package_ver }} --no-cache --extra-index-url https://test.pypi.org/simple/
       - name: Verify GCC Installation
         if: steps.test_this_platform.outputs.run == 'true'
