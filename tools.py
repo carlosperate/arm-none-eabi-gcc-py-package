@@ -151,7 +151,7 @@ def package_creator(
 
         # Get the GCC release and uncompress it in the package directory
         print("\n[green]Downloading and uncompressing GCC toolchain[/green]")
-        gcc_zip_file = pc.download_toolchain(gcc_release.files["url"])
+        gcc_zip_file = pc.download_toolchain(gcc_release.files)
         gcc_path = pc.uncompress_toolchain(gcc_zip_file, PACKAGE_PATH)
 
         # Create the package files with the GCC toolchain folder inside

@@ -10,7 +10,7 @@ import platform
 import subprocess
 import urllib.request
 from pathlib import Path
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Mapping
 from collections import namedtuple
 
 import tomli
@@ -126,15 +126,18 @@ def get_gcc_release_names() -> List[str]:
     return list(gcc_releases.keys())
 
 
-def download_toolchain(file_url: str, save_path: Path = Path.cwd()) -> Path:
+def download_toolchain(
+    release_file: Mapping[str, str], save_path: Path = Path.cwd()
+) -> Path:
     """
-    Download the toolchain from the given URL into the given path.
+    Download a toolchain release file into the given path and verify it.
     Displays a progress bar in the terminal.
 
-    :param file_url: URL to download the toolchain from.
+    :param release_file: A `gcc_releases` entry with the "url" and its "sha256"/"md5".
     :param save_path: Path to save the downloaded file.
-    :return: Full path to the downloaded file.
+    :return: Full path to the downloaded and verified file.
     """
+    file_url = release_file["url"]
     print(f"Downloading toolchain from:\n\t{file_url}")
     if not save_path.is_dir():
         raise FileNotFoundError(f"Toolchain save path not found: {save_path}")
@@ -164,6 +167,13 @@ def download_toolchain(file_url: str, save_path: Path = Path.cwd()) -> Path:
                 break
             out_file.write(chunk)
             progress.update(task_id, advance=len(chunk))
+
+    try:
+        algorithm = verify_checksum(file_path, release_file)
+    except ValueError:
+        file_path.unlink()  # A bad download left behind would block the next attempt
+        raise
+    print(f"Verified {algorithm}: {release_file[algorithm]}")
     return file_path
 
 
@@ -394,6 +404,47 @@ def build_wheel(package_path: Path, dist_path: Path, wheel_plat: str) -> None:
     return new_wheel_path
 
 
+def hash_file(file_path: Path, algorithm: str) -> str:
+    """
+    Calculate the hex digest of a file, reading it in chunks.
+
+    :param file_path: Path to the file to hash.
+    :param algorithm: Any hashlib algorithm name, e.g. "sha256".
+    :return: Lowercase hex digest.
+    """
+    file_hash = hashlib.new(algorithm)
+    with open(file_path, "rb") as file:
+        for chunk in iter(lambda: file.read(1024 * 1024), b""):
+            file_hash.update(chunk)
+    return file_hash.hexdigest()
+
+
+def verify_checksum(file_path: Path, checksums: Mapping[str, str]) -> str:
+    """
+    Check a file against the strongest checksum recorded for it.
+
+    :param file_path: Path to the file to verify.
+    :param checksums: Mapping that may hold "sha256" and/or "md5" hex digests.
+    :return: The algorithm that was verified.
+    """
+    for algorithm in ("sha256", "md5"):
+        if checksums.get(algorithm):
+            break
+    else:
+        raise ValueError(
+            f"No sha256 or md5 recorded for {file_path.name}, refusing unverified file"
+        )
+    expected = checksums[algorithm].lower()
+    actual = hash_file(file_path, algorithm)
+    if actual != expected:
+        raise ValueError(
+            f"{algorithm} mismatch for {file_path.name}:\n"
+            f"\texpected: {expected}\n"
+            f"\tgot:      {actual}"
+        )
+    return algorithm
+
+
 def create_sha256_hash(file_path: Path) -> str:
     """
     Create a SHA256 hash file for the given file in the same directory.
@@ -401,13 +452,9 @@ def create_sha256_hash(file_path: Path) -> str:
     :param file_path: Path to the file to hash.
     :return: SHA256 hash file path.
     """
-    sha256_hash = hashlib.sha256()
-    with open(file_path, "rb") as file:
-        for chunk in iter(lambda: file.read(4096), b""):
-            sha256_hash.update(chunk)
     sha256_file_path = file_path.with_suffix(f"{file_path.suffix}.sha256")
     with open(sha256_file_path, "w") as file:
-        file.write(f"{sha256_hash.hexdigest()} {file_path.name}\n")
+        file.write(f"{hash_file(file_path, 'sha256')} {file_path.name}\n")
     return sha256_file_path
 
 
@@ -490,37 +537,3 @@ def build_pypi_source_dist(
         )
 
     return source_dist_path
-
-
-def build_package_for_local_machine() -> None:
-    print(f"Project directory: {PACKAGE_ROOT.relative_to(Path.cwd())}")
-    if not PACKAGE_ROOT.is_dir() or not PACKAGE_PATH.is_dir():
-        raise FileNotFoundError(
-            f"Project/Package directory not found:\n\t{PACKAGE_ROOT}\n\t{PACKAGE_PATH}"
-        )
-
-    gcc_releases_list = get_gcc_releases()
-    for gcc_release in gcc_releases_list:
-        print(f"GCC release: {gcc_release.release_name} ({gcc_release.arch})\n")
-
-        gcc_zip_file = download_toolchain(gcc_release.files["url"])
-        gcc_path = uncompress_toolchain(gcc_zip_file, PACKAGE_PATH)
-        create_package_files(
-            PACKAGE_ROOT,
-            PACKAGE_PATH,
-            gcc_path,
-            generate_package_version(gcc_release.release_name),
-        )
-        wheel_path = build_wheel(
-            PACKAGE_ROOT, PACKAGE_ROOT / "dist", gcc_release.files["wheel_plat"]
-        )
-        metadata = get_package_metadata(PACKAGE_PATH)
-        metadata_file = wheel_path.with_suffix(f"{wheel_path.suffix}.metadata")
-        metadata_file.write_text(metadata)
-        create_sha256_hash(metadata_file)
-        create_sha256_hash(wheel_path)
-
-
-if __name__ == "__main__":
-    build_package_for_local_machine()
-    sys.exit(0)

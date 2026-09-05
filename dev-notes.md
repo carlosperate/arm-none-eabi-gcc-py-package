@@ -4,7 +4,8 @@ These are personal notes for the development of the project.
 
 ## Adding a new GCC release
 
-- Add the URLs and md5 to the `gcc_releases.py` file
+- Add the URLs and checksums to the `gcc_releases.py` file: `sha256` when Arm publishes
+  one, `md5` otherwise. The build verifies the download and refuses to run without one
 - Check the release notes and ensure the added wheel platform is correct
 - Add the "short version" to `gcc_short_versions` in `gcc_releases.py` file
 - Add a new row to the release tables in both READMEs
