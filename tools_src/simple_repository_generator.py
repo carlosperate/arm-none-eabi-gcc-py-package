@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 import re
+import html
 import hashlib
+import email.parser
 from pathlib import Path
 from typing import Dict, List
 from dataclasses import dataclass
@@ -20,7 +22,7 @@ class WheelData:
     sha256: str
     metadata_url: str = ""
     metadata_sha256: str = ""
-    python_requires: str = "&gt;=3.8"  # Keep in sync with the package pyproject.toml.txt
+    python_requires: str = ""  # Requires-Python from the wheel METADATA, empty if none
 
 
 def normalise_project_name(name):
@@ -60,7 +62,7 @@ def get_gh_releases_wheel_urls(
                                 f"{sha256_file_contents}\n"
                                 f"{wheel_sha256}"
                             )
-                        print(f"\tFound wheel SHA-256 ({wheel_sha256}) in\n")
+                        print(f"\tFound wheel SHA-256 ({wheel_sha256}) in")
                         print(f"\t\t{asset.name}")
                 elif asset.name == f"{asset_wheel.name}.metadata":
                     # Ensure the URL is the same as the wheel URL + ".metadata" extension
@@ -107,10 +109,18 @@ def get_gh_releases_wheel_urls(
                     sha256=wheel_sha256,
                     metadata_url=metadata_url,
                     metadata_sha256=metadata_sha256,
+                    python_requires=get_requires_python(metadata_url) if metadata_url else "",
                 )
             )
 
     return wheel_files
+
+
+def get_requires_python(metadata_url: str) -> str:
+    """Requires-Python declared in a wheel's METADATA file, empty if none."""
+    with requests.get(metadata_url) as r:
+        r.raise_for_status()
+        return email.parser.Parser().parsestr(r.text).get("Requires-Python", "")
 
 
 def calculate_sha256(url: str) -> str:
@@ -178,8 +188,13 @@ def gen_repo_html(packages: Dict[str, Dict[str, List[WheelData]]], output: Path)
         for version, wheels in packages[package].items():
             for wheel in wheels:
                 href = f"{wheel.url}#sha256={wheel.sha256}"
+                requires_python = (
+                    f' data-requires-python="{html.escape(wheel.python_requires)}"'
+                    if wheel.python_requires
+                    else ""
+                )
                 version_links.append(
-                    f'<a href="{href}" data-requires-python="{wheel.python_requires}" '
+                    f'<a href="{href}"{requires_python} '
                     f'data-dist-info-metadata="sha256={wheel.metadata_sha256}" '
                     f'data-core-metadata="sha256={wheel.metadata_sha256}">'
                     f"{wheel.name}</a>"
