@@ -91,24 +91,10 @@ jobs:
     needs: ["setup-matrix", "build"]
     strategy:
       matrix:
-        os: [ubuntu-22.04, ubuntu-22.04-arm, macos-15-intel, macos-14, windows-2019]
-        python: ["3.6", "3.8", "3.13"]
+        os: [ubuntu-22.04, ubuntu-22.04-arm, macos-15-intel, macos-14, windows-2022]
+        python: ["3.8", "3.14"]
         gcc: ${{ fromJSON(needs.setup-matrix.outputs.matrix) }}
         exclude:
-          # macOS arm64 and Ubuntu aarch64 only have Python 3.8+
-          - os: macos-14
-            python: "3.6"
-          - os: ubuntu-22.04-arm
-            python: "3.6"
-          # GCC 13+ needs macOS 12+ and last pip release for Py3.6 is
-          # not compatible with that wheel platform specification
-          #- os: macos-13
-          #  python: "3.6"
-          # The other OS platforms only need the oldest and newest Python
-          - os: ubuntu-22.04
-            python: "3.8"
-          - os: windows-2019
-            python: "3.8"
           # arm64 macOS first compatible GCC release is 12.2.Rel1
           - os: macos-14
             gcc: "11.3.Rel1"

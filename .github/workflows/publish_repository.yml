@@ -7,10 +7,10 @@ jobs:
     runs-on: ubuntu-latest
     name: 🏗️ Build Package Repository
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set Up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
 
@@ -48,32 +48,16 @@ jobs:
     needs: "deploy-package-repo"
     strategy:
       matrix:
-        # macOS 13 is x86_64 and macOS 14 is arm64
-        os: [ubuntu-20.04, ubuntu-22.04-arm, macos-13, macos-14, windows-2019]
-        python: ["3.6", "3.8", "3.13"]
-        exclude:
-          # macOS arm64 and Ubuntu aarch64 only has Python 3.8+
-          - os: macos-14
-            python: "3.6"
-          - os: ubuntu-22.04-arm
-            python: "3.6"
-          # GCC 13+ need macOS 12+ and last pip release for Py3.6 is
-          # not compatible with that wheel platform specification
-          - os: macos-13
-            python: "3.6"
-          # The others can run on Python 3.6
-          - os: ubuntu-20.04
-            python: "3.8"
-          - os: windows-2019
-            python: "3.8"
+        os: [ubuntu-22.04, ubuntu-22.04-arm, macos-15-intel, macos-14, windows-2022]
+        python: ["3.8", "3.14"]
       fail-fast: false
     runs-on: ${{ matrix.os }}
-    name: "⤵️ ${{ matrix.gcc }} ${{ matrix.os }} Py${{ matrix.python }}"
+    name: "⤵️ ${{ matrix.os }} Py${{ matrix.python }}"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
 

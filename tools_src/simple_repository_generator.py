@@ -20,7 +20,7 @@ class WheelData:
     sha256: str
     metadata_url: str = ""
     metadata_sha256: str = ""
-    python_requires: str = "&gt;=3.6"  # Default to Python 3.6+
+    python_requires: str = "&gt;=3.8"  # Keep in sync with the package pyproject.toml.txt
 
 
 def normalise_project_name(name):

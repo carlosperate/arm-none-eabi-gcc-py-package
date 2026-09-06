@@ -19,10 +19,8 @@ jobs:
     needs: wait-for-repository
     strategy:
       matrix:
-        # macOS 13 is x86_64 and macOS 14 is arm64
-        os: [ubuntu-20.04, ubuntu-22.04-arm, macos-13, macos-14, windows-2019]
-        # Source distribution dependency wheel-stub is Python 3.8+
-        python: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+        os: [ubuntu-22.04, ubuntu-22.04-arm, macos-15-intel, macos-14, windows-2022]
+        python: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
       fail-fast: false
     runs-on: ${{ matrix.os }}
     name: "🧪 ${{ matrix.os }} - Py ${{ matrix.python }}"
@@ -33,7 +31,7 @@ jobs:
         run: echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
 
       - name: Checkout the project in a subdirectory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: "project"
 
@@ -48,7 +46,7 @@ jobs:
 
       - name: Set up Python
         if: steps.test_this_platform.outputs.run == 'true'
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "${{ matrix.python }}"
 
@@ -92,7 +90,7 @@ jobs:
 
       - name: Clone STM32 project
         if: steps.test_this_platform.outputs.run == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: 'trebisky/stm32f103'
           ref: 7cfe5feaf02c653352331374d2ad178eb04efde7
@@ -106,7 +104,7 @@ jobs:
   publish-test-pypi:
     needs: test-release
     name: 📦 Publish to Test PyPI
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     environment:
       # Need to configure this when ready
       # https://pypi.org/manage/account/publishing/
@@ -122,7 +120,7 @@ jobs:
         run: echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
 
@@ -145,8 +143,7 @@ jobs:
     needs: publish-test-pypi
     strategy:
       matrix:
-        # macOS 13 is x86_64 and macOS 14 is arm64
-        os: [ubuntu-20.04, ubuntu-22.04-arm, macos-13, macos-14, windows-2019]
+        os: [ubuntu-22.04, ubuntu-22.04-arm, macos-15-intel, macos-14, windows-2022]
       fail-fast: false
     runs-on: ${{ matrix.os }}
     name: "⤵️ Test PyPI ${{ matrix.os }}"
@@ -163,12 +160,12 @@ jobs:
           echo "package_ver=$package_ver" >> $GITHUB_OUTPUT
 
       - name: Checkout the project in a subdirectory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: "project"
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.8"
 
@@ -201,7 +198,7 @@ jobs:
 
       - name: Clone STM32 project
         if: steps.test_this_platform.outputs.run == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: 'trebisky/stm32f103'
           ref: 7cfe5feaf02c653352331374d2ad178eb04efde7
