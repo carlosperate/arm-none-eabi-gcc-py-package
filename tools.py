@@ -168,7 +168,7 @@ def package_creator(
 
         print("\n[green]Producing metadata files[/green]")
         metadata_file = wheel_path.with_suffix(f"{wheel_path.suffix}.metadata")
-        metadata_file.write_text(pc.get_package_metadata(PACKAGE_PATH))
+        metadata_file.write_bytes(pc.get_wheel_metadata(wheel_path))
         pc.create_sha256_hash(metadata_file)
         pc.create_sha256_hash(wheel_path)
         print("Done.")

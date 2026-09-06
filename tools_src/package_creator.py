@@ -458,32 +458,22 @@ def create_sha256_hash(file_path: Path) -> str:
     return sha256_file_path
 
 
-def get_package_metadata(package_path: Path) -> str:
+def get_wheel_metadata(wheel_path: Path) -> bytes:
     """
-    Gets the package metadata created during the wheel creation.
+    Get the METADATA file from inside a built wheel, byte for byte.
 
-    It will be in the same directory where the package folder is, as the
-    <package>.egg-info folder.
+    PEP 658 requires the served .metadata sidecar to be exactly this file.
 
-    :param package_path: Path to the package directory.
-    :return: The contents of the <package>.egg-info/PKG-INFO file.
+    :param wheel_path: Path to the wheel file.
+    :return: Contents of the wheel's .dist-info/METADATA file.
     """
-    package_path = package_path.resolve()
-    if not package_path.is_dir():
-        raise FileNotFoundError(f"Package directory not found: {package_path}")
-    egg_info_folder = None
-    for item in package_path.parent.iterdir():
-        if item.is_dir() and item.name.endswith(".egg-info"):
-            egg_info_folder = item
-            break
-    if egg_info_folder is None:
-        raise FileNotFoundError(f"Package metadata folder not found in: {package_path}")
-    pkg_info_file = egg_info_folder / "PKG-INFO"
-    if not pkg_info_file.is_file():
-        raise FileNotFoundError(
-            f"Package metadata file not found in: {egg_info_folder}"
-        )
-    return pkg_info_file.read_text()
+    with zipfile.ZipFile(wheel_path) as wheel:
+        names = [n for n in wheel.namelist() if n.endswith(".dist-info/METADATA")]
+        if len(names) != 1:
+            raise FileNotFoundError(
+                f"Expected one METADATA file in {wheel_path.name}, found: {names}"
+            )
+        return wheel.read(names[0])
 
 
 def build_pypi_source_dist(
